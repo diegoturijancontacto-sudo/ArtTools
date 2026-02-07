@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Catálogo de Arte - Estilo Galería</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generador de Catálogo - Estilo Galería</title>
+    <!-- Librerías -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -20,159 +21,243 @@
             background: white;
             width: 100%;
             aspect-ratio: 210/297; /* A4 Ratio */
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             margin-bottom: 2rem;
+            z-index: 1; /* Asegura que el contenido esté sobre el fondo */
         }
 
-        /* Tipografía específica del catálogo */
+        /* Marca de agua en CSS para la vista previa */
+        .watermark-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%; /* Tamaño del logo en fondo */
+            opacity: 0.05; /* Muy sutil */
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .font-serif-cat {
             font-family: 'Times New Roman', Times, serif;
         }
         
         .loading-overlay {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.95);
             backdrop-filter: blur(5px);
+        }
+
+        /* Inputs de la barra lateral */
+        .input-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        
+        .input-field {
+            width: 100%;
+            font-size: 0.875rem;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+                z-index: 50;
+                border-top: 1px solid #e5e7eb;
+            }
+            .content-padding-bottom {
+                padding-bottom: 100px;
+            }
         }
     </style>
 </head>
-<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="min-h-screen flex flex-col md:flex-row md:h-screen md:overflow-hidden bg-gray-100">
 
-    <!-- BARRA LATERAL: EDITOR (Donde se ingresan los datos rojos) -->
-    <aside class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-full shadow-lg z-10">
-        <div class="p-5 bg-slate-800 text-white shadow-md">
-            <h1 class="text-xl font-bold font-serif-cat"><i class="fas fa-palette mr-2"></i>Editor de Catálogo</h1>
-            <p class="text-xs text-slate-300 mt-1">Configura los textos "rojos" y sube obras.</p>
+    <!-- Recurso oculto: Logo para PDF -->
+    <img id="logoImage" src="1000039327.png" style="display: none;" crossorigin="anonymous">
+
+    <!-- NAVEGACIÓN MÓVIL (Tabs) -->
+    <div class="md:hidden bg-slate-900 text-white p-2 sticky top-0 z-40 shadow-md flex justify-around items-center">
+        <button onclick="switchTab('editor')" id="tabEditor" class="flex-1 py-2 text-center font-bold border-b-2 border-white transition-colors">
+            <i class="fas fa-edit mr-2"></i>Editar
+        </button>
+        <button onclick="switchTab('preview')" id="tabPreview" class="flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent transition-colors">
+            <i class="fas fa-eye mr-2"></i>Vista Previa
+        </button>
+    </div>
+
+    <!-- SECCIÓN IZQUIERDA: EDITOR -->
+    <aside id="editorPanel" class="w-full md:w-1/3 lg:w-1/4 bg-white md:border-r border-gray-200 flex flex-col md:h-full z-10 shrink-0 shadow-xl">
+        
+        <!-- Header Desktop -->
+        <div class="hidden md:block p-6 bg-slate-900 text-white shadow-md shrink-0">
+            <h1 class="text-2xl font-bold font-serif-cat tracking-wider"><i class="fas fa-image mr-2"></i>CATÁLOGO</h1>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">Generador Profesional</p>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+        <!-- Contenido Scrollable -->
+        <div class="flex-1 p-5 space-y-6 overflow-y-auto content-padding-bottom custom-scrollbar">
             
-            <!-- SECCIÓN 1: PORTADA (Datos Rojos 1) -->
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1">
-                    <i class="fas fa-book-open mr-1"></i> Configuración Portada
+            <!-- 1. PORTADA -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-800 uppercase mb-4 border-b border-gray-300 pb-2 flex items-center">
+                    <span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-xs mr-2">1</span>
+                    Configuración
                 </h2>
                 
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Artista (Título Principal)</label>
-                        <input type="text" id="artistName" value="CARLOS OVIEDO" class="w-full text-sm p-2 border border-gray-300 rounded focus:ring-2 focus:ring-slate-500 outline-none font-serif-cat">
+                <div class="space-y-4">
+                    <div class="input-group">
+                        <label>Artista</label>
+                        <input type="text" id="artistName" value="CARLOS OVIEDO" class="input-field font-serif-cat font-bold">
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Subtítulo</label>
-                        <input type="text" id="catalogSubtitle" value="CATÁLOGO DE OBRA DISPONIBLE" class="w-full text-sm p-2 border border-gray-300 rounded focus:ring-2 focus:ring-slate-500 outline-none font-serif-cat">
+                    <div class="input-group">
+                        <label>Subtítulo</label>
+                        <input type="text" id="catalogSubtitle" value="CATÁLOGO DE OBRA DISPONIBLE" class="input-field font-serif-cat">
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-red-500 mb-1">Texto Actualización (Rojo en muestra)</label>
-                        <input type="text" id="updateText" value="ACTUALIZACIÓN DICIEMBRE 2024" class="w-full text-sm p-2 border border-red-200 bg-red-50 rounded focus:ring-2 focus:ring-red-500 outline-none text-red-700">
+                    <div class="input-group">
+                        <label>Fecha de Actualización</label>
+                        <input type="text" id="updateText" value="ACTUALIZACIÓN DICIEMBRE 2024" class="input-field font-bold text-gray-800 bg-white">
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-red-500 mb-1">Nota Legal (Pie de portada)</label>
-                        <textarea id="legalNote" rows="3" class="w-full text-xs p-2 border border-red-200 bg-red-50 rounded focus:ring-2 focus:ring-red-500 outline-none text-red-700">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
+                    <div class="input-group">
+                        <label>Nota Legal</label>
+                        <textarea id="legalNote" rows="3" class="input-field text-gray-600 bg-white">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
                     </div>
                 </div>
             </div>
 
-            <!-- SECCIÓN 2: OBRAS (Datos Rojos 2) -->
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1">
-                    <i class="fas fa-images mr-1"></i> Gestión de Obras
+            <!-- 2. OBRAS -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-800 uppercase mb-4 border-b border-gray-300 pb-2 flex items-center">
+                    <span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-xs mr-2">2</span>
+                    Galería
                 </h2>
                 
-                <!-- Botón Subir -->
-                <label class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-100 transition mb-4">
-                    <div class="text-center">
-                        <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
-                        <p class="text-xs text-slate-500 mt-1">Click para agregar imágenes</p>
+                <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 bg-white rounded-lg cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition mb-4 group">
+                    <div class="flex flex-col items-center justify-center pt-2 pb-2">
+                        <i class="fas fa-plus-circle text-3xl text-slate-300 group-hover:text-slate-500 mb-2 transition-colors"></i>
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide">Agregar Obras</p>
                     </div>
                     <input type="file" id="imageInput" class="hidden" multiple accept="image/*">
                 </label>
 
-                <!-- Lista de Obras -->
                 <div id="artworkList" class="space-y-3">
-                    <!-- Los items se generarán aquí con JS -->
-                    <p class="text-xs text-center text-gray-400 italic" id="emptyMsg">No hay obras cargadas</p>
+                    <div class="text-center py-8 px-4 border border-dashed border-gray-200 rounded bg-white">
+                        <p class="text-sm text-gray-400">No hay obras cargadas.</p>
+                        <p class="text-xs text-gray-300 mt-1">Sube imágenes para comenzar.</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- SECCIÓN 3: PIE DE PÁGINA GLOBAL -->
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-10">
-                <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1">
-                    <i class="fas fa-shoe-prints mr-1"></i> Pie de Página (Global)
+            <!-- 3. PIE DE PÁGINA -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm mb-8">
+                <h2 class="text-sm font-bold text-slate-800 uppercase mb-4 border-b border-gray-300 pb-2 flex items-center">
+                    <span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-xs mr-2">3</span>
+                    Pie de Página
                 </h2>
-                <div>
-                    <label class="block text-xs font-medium text-red-500 mb-1">Texto de disponibilidad</label>
-                    <input type="text" id="footerAvailability" value="Obra disponible Diciembre 2024" class="w-full text-sm p-2 border border-red-200 bg-red-50 rounded focus:ring-2 focus:ring-red-500 outline-none text-red-700">
+                <div class="input-group">
+                    <label>Texto Disponibilidad</label>
+                    <input type="text" id="footerAvailability" value="Obra disponible Diciembre 2024" class="input-field text-gray-800 bg-white">
                 </div>
             </div>
         </div>
 
-        <!-- Botón Generar -->
-        <div class="p-4 bg-white border-t border-gray-200">
-            <button onclick="generatePDF()" id="generateBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded transition flex items-center justify-center shadow-lg">
-                <i class="fas fa-file-pdf mr-2"></i> DESCARGAR PDF
+        <!-- Botón Desktop -->
+        <div class="hidden md:block p-5 bg-white border-t border-gray-200 shrink-0 z-20">
+            <button onclick="generatePDF()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded shadow-lg transition-all transform hover:translate-y-px flex items-center justify-center tracking-wide uppercase text-sm">
+                <i class="fas fa-file-pdf mr-2"></i> Descargar Catálogo
             </button>
         </div>
     </aside>
 
-    <!-- ÁREA PRINCIPAL: VISTA PREVIA -->
-    <main class="flex-1 bg-gray-200 h-full overflow-y-auto p-8 relative">
-        <div class="max-w-[600px] mx-auto" id="previewContainer">
-            <!-- La vista previa HTML se renderiza aquí -->
-            
-            <!-- Portada Preview -->
-            <div class="preview-page p-12 flex flex-col justify-between items-center text-center font-serif-cat">
-                <div class="flex-1 flex flex-col justify-center w-full">
-                    <!-- Líneas guía decorativas (simuladas) -->
-                    <div class="absolute inset-0 pointer-events-none opacity-10">
-                        <div class="h-full w-px bg-purple-500 absolute left-1/4"></div>
-                        <div class="h-full w-px bg-purple-500 absolute right-1/4"></div>
-                    </div>
+    <!-- SECCIÓN DERECHA: VISTA PREVIA -->
+    <main id="previewPanel" class="hidden md:block w-full md:flex-1 bg-gray-200 md:h-full md:overflow-y-auto p-4 md:p-10 relative z-0">
+        
+        <div class="max-w-[700px] mx-auto content-padding-bottom transition-all" id="previewContainer">
+            <!-- Renderizado JS -->
+        </div>
 
-                    <h1 class="text-5xl tracking-widest mb-4 uppercase" id="prevArtist">CARLOS OVIEDO</h1>
-                    <div class="w-full h-px bg-gray-300 my-2"></div>
-                    <h2 class="text-xl tracking-wide uppercase mt-2" id="prevSubtitle">CATÁLOGO DE OBRA DISPONIBLE</h2>
-                    <div class="w-full h-px bg-gray-300 my-2"></div>
-                </div>
-                
-                <div class="w-full pb-10">
-                    <p class="text-sm font-bold tracking-widest uppercase mb-2 border-t border-b border-gray-300 py-1 inline-block" id="prevUpdate">ACTUALIZACIÓN DICIEMBRE 2024</p>
-                    <p class="text-xs text-gray-500 mt-2 italic px-10" id="prevLegal">El traslado de la obra requiere una logística de hasta 4 días hábiles...</p>
-                </div>
+        <!-- Placeholder Inicial -->
+        <div id="previewPlaceholder" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+            <div class="text-center">
+                <i class="fas fa-book-reader text-7xl text-gray-400 mb-4"></i>
+                <p class="text-2xl text-gray-500 font-serif-cat italic">Vista Previa</p>
             </div>
-
-            <!-- Ejemplo de página interior (Placeholder) -->
-            <div class="preview-page p-12 flex flex-col items-center justify-between font-serif-cat opacity-50">
-                <div class="flex-1 w-full flex items-center justify-center bg-gray-50 mb-4">
-                    <p class="text-gray-400">Las páginas de las obras se generarán aquí...</p>
-                </div>
-            </div>
-
         </div>
     </main>
 
-    <!-- Loading Overlay -->
-    <div id="loader" class="fixed inset-0 loading-overlay hidden z-50 flex items-center justify-center flex-col">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-slate-800 mb-4"></div>
-        <h3 class="text-xl font-serif-cat text-slate-800">Generando Catálogo PDF...</h3>
-        <p class="text-gray-500">Procesando imágenes en alta resolución</p>
+    <!-- BOTÓN MÓVIL FLOTANTE -->
+    <div class="mobile-fab-container md:hidden">
+        <button onclick="generatePDF()" id="mobileGenerateBtn" class="w-full bg-slate-900 active:bg-slate-800 text-white font-bold py-3 px-4 rounded shadow-lg flex items-center justify-center text-sm uppercase tracking-wide">
+            <i class="fas fa-download mr-2"></i> Descargar PDF
+        </button>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loader" class="fixed inset-0 loading-overlay hidden z-50 flex items-center justify-center flex-col px-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-slate-900 mb-4"></div>
+        <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest">Generando PDF</h3>
+        <p class="text-sm text-gray-500 mt-2">Aplicando marca de agua y formato...</p>
     </div>
 
     <script>
-        // Estado Global
+        // --- GESTIÓN DE PESTAÑAS (MÓVIL) ---
+        function switchTab(tab) {
+            const editorPanel = document.getElementById('editorPanel');
+            const previewPanel = document.getElementById('previewPanel');
+            const tabEditor = document.getElementById('tabEditor');
+            const tabPreview = document.getElementById('tabPreview');
+
+            if (tab === 'editor') {
+                editorPanel.classList.remove('hidden');
+                previewPanel.classList.add('hidden');
+                tabEditor.classList.add('border-white', 'text-white');
+                tabEditor.classList.remove('border-transparent', 'text-gray-400');
+                tabPreview.classList.add('border-transparent', 'text-gray-400');
+                tabPreview.classList.remove('border-white', 'text-white');
+            } else {
+                editorPanel.classList.add('hidden');
+                previewPanel.classList.remove('hidden');
+                tabPreview.classList.add('border-white', 'text-white');
+                tabPreview.classList.remove('border-transparent', 'text-gray-400');
+                tabEditor.classList.add('border-transparent', 'text-gray-400');
+                tabEditor.classList.remove('border-white', 'text-white');
+            }
+        }
+
+        // --- LÓGICA DE APLICACIÓN ---
         let artworks = [];
         const { jsPDF } = window.jspdf;
 
-        // Referencias DOM
+        // Elementos DOM
         const imageInput = document.getElementById('imageInput');
         const artworkList = document.getElementById('artworkList');
         const previewContainer = document.getElementById('previewContainer');
-        const emptyMsg = document.getElementById('emptyMsg');
+        const logoImage = document.getElementById('logoImage');
 
-        // Inputs Globales
+        // Inputs
         const inputs = {
             artistName: document.getElementById('artistName'),
             subtitle: document.getElementById('catalogSubtitle'),
@@ -181,7 +266,7 @@
             footerAvailability: document.getElementById('footerAvailability')
         };
 
-        // Listeners para actualizar vista previa en tiempo real
+        // Listeners
         Object.keys(inputs).forEach(key => {
             inputs[key].addEventListener('input', updatePreview);
         });
@@ -190,7 +275,10 @@
 
         function handleImageUpload(e) {
             const files = Array.from(e.target.files);
-            if(files.length > 0) emptyMsg.style.display = 'none';
+            if(files.length > 0 && artworks.length === 0) {
+                 // Limpiar mensaje de vacío si es la primera vez
+                artworkList.innerHTML = '';
+            }
 
             files.forEach(file => {
                 const reader = new FileReader();
@@ -198,10 +286,10 @@
                     const artwork = {
                         id: Date.now() + Math.random(),
                         image: event.target.result,
-                        title: "Título de la obra",
+                        title: "Título de la Obra",
                         medium: "Óleo sobre tela",
                         dimensions: "100 x 100 cm",
-                        code: "COD01"
+                        code: "C.O."
                     };
                     artworks.push(artwork);
                     renderArtworkList();
@@ -209,46 +297,53 @@
                 };
                 reader.readAsDataURL(file);
             });
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         }
 
         function renderArtworkList() {
             artworkList.innerHTML = '';
+            
             if(artworks.length === 0) {
-                artworkList.appendChild(emptyMsg);
-                emptyMsg.style.display = 'block';
+                 artworkList.innerHTML = `
+                    <div class="text-center py-8 px-4 border border-dashed border-gray-200 rounded bg-white">
+                        <p class="text-sm text-gray-400">No hay obras cargadas.</p>
+                        <p class="text-xs text-gray-300 mt-1">Sube imágenes para comenzar.</p>
+                    </div>`;
                 return;
             }
 
             artworks.forEach((art, index) => {
                 const div = document.createElement('div');
-                div.className = 'bg-white p-3 rounded border border-gray-200 shadow-sm relative group';
+                div.className = 'bg-white p-3 rounded border border-gray-200 shadow-sm relative group transition-all hover:shadow-md';
                 div.innerHTML = `
-                    <div class="flex gap-3 mb-2">
-                        <img src="${art.image}" class="w-16 h-16 object-cover rounded bg-gray-100">
+                    <div class="flex gap-3 mb-2 items-start">
+                        <div class="w-16 h-16 shrink-0 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                            <img src="${art.image}" class="w-full h-full object-cover">
+                        </div>
                         <div class="flex-1 min-w-0 space-y-2">
                             <input type="text" placeholder="Título" value="${art.title}" 
                                 oninput="updateArtwork('${art.id}', 'title', this.value)"
-                                class="w-full text-xs p-1 border rounded font-bold">
-                            <div class="flex gap-1">
+                                class="w-full text-sm p-1.5 border border-gray-300 rounded font-bold text-gray-800 focus:border-slate-500 outline-none font-serif-cat">
+                            
+                            <div class="grid grid-cols-2 gap-2">
                                 <input type="text" placeholder="Técnica" value="${art.medium}" 
                                     oninput="updateArtwork('${art.id}', 'medium', this.value)"
-                                    class="w-1/2 text-xs p-1 border rounded">
+                                    class="text-xs p-1.5 border border-gray-300 rounded focus:border-slate-500 outline-none bg-gray-50">
                                 <input type="text" placeholder="Medidas" value="${art.dimensions}" 
                                     oninput="updateArtwork('${art.id}', 'dimensions', this.value)"
-                                    class="w-1/2 text-xs p-1 border rounded">
+                                    class="text-xs p-1.5 border border-gray-300 rounded focus:border-slate-500 outline-none bg-gray-50">
                             </div>
                             <input type="text" placeholder="Código" value="${art.code}" 
                                 oninput="updateArtwork('${art.id}', 'code', this.value)"
-                                class="w-full text-xs p-1 border rounded bg-slate-50">
+                                class="w-full text-xs p-1.5 border border-gray-300 rounded bg-slate-100 text-slate-600 focus:border-slate-500 outline-none font-mono">
                         </div>
                     </div>
                     <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                        <span class="text-xs font-bold text-gray-400">#${index + 1}</span>
+                        <span class="text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded">#${index + 1}</span>
                         <div class="flex gap-2">
-                            <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-blue-500" title="Subir"><i class="fas fa-arrow-up"></i></button>
-                            <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-blue-500" title="Bajar"><i class="fas fa-arrow-down"></i></button>
-                            <button onclick="deleteArtwork('${art.id}')" class="text-red-400 hover:text-red-600" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-slate-600 p-1.5 rounded hover:bg-gray-100"><i class="fas fa-chevron-up"></i></button>
+                            <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-slate-600 p-1.5 rounded hover:bg-gray-100"><i class="fas fa-chevron-down"></i></button>
+                            <button onclick="deleteArtwork('${art.id}')" class="text-red-300 hover:text-red-500 p-1.5 rounded hover:bg-red-50"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                 `;
@@ -260,14 +355,16 @@
             const art = artworks.find(a => a.id == id);
             if(art) {
                 art[field] = value;
-                updatePreview(); // Actualizar visualización
+                updatePreview();
             }
         }
 
         function deleteArtwork(id) {
-            artworks = artworks.filter(a => a.id != id);
-            renderArtworkList();
-            updatePreview();
+            if(confirm('¿Eliminar esta obra?')) {
+                artworks = artworks.filter(a => a.id != id);
+                renderArtworkList();
+                updatePreview();
+            }
         }
 
         function moveArtwork(index, direction) {
@@ -280,64 +377,56 @@
             updatePreview();
         }
 
-        // --- LÓGICA DE VISTA PREVIA (HTML) ---
+        // --- VISTA PREVIA (HTML) ---
         function updatePreview() {
-            // Actualizar portada
-            document.getElementById('prevArtist').textContent = inputs.artistName.value;
-            document.getElementById('prevSubtitle').textContent = inputs.subtitle.value;
-            document.getElementById('prevUpdate').textContent = inputs.updateText.value;
-            document.getElementById('prevLegal').textContent = inputs.legalNote.value;
-
-            // Limpiar contenedor (manteniendo solo la portada que es estática en el DOM inicial, 
-            // pero para simplificar, reconstruiremos todo)
             previewContainer.innerHTML = '';
+            const logoSrc = logoImage.src;
 
-            // 1. Renderizar Portada
+            // 1. Portada
             const coverDiv = document.createElement('div');
-            coverDiv.className = 'preview-page p-12 flex flex-col justify-between items-center text-center font-serif-cat';
+            coverDiv.className = 'preview-page p-8 md:p-16 flex flex-col justify-between items-center text-center font-serif-cat';
             coverDiv.innerHTML = `
-                <div class="flex-1 flex flex-col justify-center w-full">
-                    <h1 class="text-5xl tracking-widest mb-4 uppercase">${inputs.artistName.value}</h1>
-                    <div class="w-full h-px bg-gray-300 my-2"></div>
-                    <h2 class="text-xl tracking-wide uppercase mt-2">${inputs.subtitle.value}</h2>
-                    <div class="w-full h-px bg-gray-300 my-2"></div>
+                <img src="${logoSrc}" class="watermark-bg" alt="Watermark">
+                <div class="flex-1 flex flex-col justify-center w-full z-10">
+                    <h1 class="text-4xl md:text-6xl tracking-widest mb-6 uppercase text-black font-bold break-words w-full">${inputs.artistName.value}</h1>
+                    <div class="w-full h-px bg-gray-300 my-3"></div>
+                    <h2 class="text-xl md:text-2xl tracking-wide uppercase mt-3 text-black">${inputs.subtitle.value}</h2>
+                    <div class="w-full h-px bg-gray-300 my-3"></div>
                 </div>
-                <div class="w-full pb-10">
-                    <div class="border border-red-200 border-dashed p-1 inline-block">
-                        <p class="text-sm font-bold tracking-widest uppercase border-t border-b border-gray-800 py-1 inline-block text-red-600">${inputs.updateText.value}</p>
+                <div class="w-full pb-6 z-10">
+                    <div class="border border-gray-200 border-dashed p-1 inline-block mb-6">
+                        <p class="text-sm md:text-base font-bold tracking-widest uppercase border-t border-b border-black py-1.5 inline-block text-black px-4">
+                            ${inputs.updateText.value}
+                        </p>
                     </div>
-                    <p class="text-xs text-gray-500 mt-4 italic px-10">${inputs.legalNote.value}</p>
+                    <p class="text-xs text-gray-800 mt-2 italic px-4 md:px-12 leading-relaxed opacity-90">${inputs.legalNote.value}</p>
                 </div>
             `;
             previewContainer.appendChild(coverDiv);
 
-            // 2. Renderizar Páginas de Obra
+            // 2. Páginas de Obra
             artworks.forEach((art, i) => {
                 const page = document.createElement('div');
-                page.className = 'preview-page p-12 flex flex-col justify-between font-serif-cat';
+                page.className = 'preview-page p-8 md:p-16 flex flex-col justify-between font-serif-cat';
                 
-                // Construir la línea única de datos
                 const singleLineData = `"${art.title}" | ${art.medium} | ${art.dimensions} | ${art.code}`;
-                
-                // Footer text
                 const footerText = `${inputs.artistName.value} | ${inputs.footerAvailability.value} | pag.${i + 1}`;
 
                 page.innerHTML = `
-                    <div class="flex-1 w-full flex items-center justify-center overflow-hidden mb-6 relative">
-                        <img src="${art.image}" class="max-h-full max-w-full object-contain shadow-sm">
+                    <img src="${logoSrc}" class="watermark-bg" alt="Watermark">
+                    <div class="flex-1 w-full flex items-center justify-center overflow-hidden mb-8 relative py-4 z-10">
+                        <img src="${art.image}" class="max-h-full max-w-full object-contain drop-shadow-md">
                     </div>
                     
-                    <div class="w-full">
-                        <div class="border-t border-gray-300 pt-2 mb-8">
-                            <div class="border border-red-200 border-dashed p-1 inline-block w-full text-right">
-                                <p class="text-lg text-right w-full text-red-600">${singleLineData}</p>
+                    <div class="w-full shrink-0 z-10">
+                        <div class="border-t border-gray-300 pt-4 mb-8">
+                            <div class="w-full text-right">
+                                <p class="text-sm md:text-xl text-right w-full text-black font-serif-cat">${singleLineData}</p>
                             </div>
                         </div>
                         
-                        <div class="flex justify-end border-t border-gray-300 pt-2">
-                             <div class="border border-red-200 border-dashed p-1 inline-block">
-                                <p class="text-xs text-gray-500 italic text-red-600">${footerText}</p>
-                             </div>
+                        <div class="flex justify-end border-t border-gray-300 pt-3">
+                             <p class="text-xs md:text-sm text-gray-600 italic text-right">${footerText}</p>
                         </div>
                     </div>
                 `;
@@ -345,15 +434,14 @@
             });
         }
 
-        // --- GENERACIÓN DE PDF (JSPDF) ---
+        // --- GENERACIÓN PDF (JS PDF) ---
         async function generatePDF() {
-            const btn = document.getElementById('generateBtn');
             const loader = document.getElementById('loader');
             
             try {
                 loader.classList.remove('hidden');
-                
-                // Crear documento A4
+                await new Promise(r => setTimeout(r, 100)); // UI refresh
+
                 const doc = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
@@ -364,17 +452,46 @@
                 const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
                 const margin = 20;
 
-                // --- PÁGINA 1: PORTADA ---
-                doc.setFont("times", "roman"); // Times New Roman
+                // Preparar logo para PDF (Marca de agua)
+                // Cargamos la imagen desde el elemento img oculto
+                const logoImgElement = document.getElementById('logoImage');
+                // Nota: jspdf necesita datos base64 o un objeto imagen cargado.
+                // Como está en local, lo dibujaremos.
+                
+                // Función para dibujar marca de agua en la página actual
+                const addWatermark = () => {
+                    try {
+                        // Guardar estado actual
+                        doc.saveGraphicsState();
+                        // Establecer transparencia (muy sutil)
+                        doc.setGState(new doc.GState({opacity: 0.05}));
+                        
+                        const wmWidth = 100; // 10cm ancho
+                        const wmHeight = 100; // asumiendo cuadrado
+                        const wmX = (pageWidth - wmWidth) / 2;
+                        const wmY = (pageHeight - wmHeight) / 2;
+                        
+                        doc.addImage(logoImgElement, 'PNG', wmX, wmY, wmWidth, wmHeight);
+                        
+                        // Restaurar estado (opacidad normal)
+                        doc.restoreGraphicsState();
+                    } catch (e) {
+                        console.warn("No se pudo añadir marca de agua", e);
+                    }
+                };
+
+                // --- PORTADA ---
+                addWatermark(); // Marca de agua en portada
+                doc.setFont("times", "roman");
                 
                 // Título
-                doc.setFontSize(42);
+                doc.setFontSize(36);
                 doc.setTextColor(0, 0, 0);
                 doc.text(inputs.artistName.value.toUpperCase(), pageWidth / 2, pageHeight / 2 - 20, { align: "center" });
 
-                // Líneas decorativas (simulando las líneas azules del diseño original)
-                doc.setDrawColor(150, 150, 150);
-                doc.setLineWidth(0.2);
+                // Líneas decoración
+                doc.setDrawColor(180, 180, 180);
+                doc.setLineWidth(0.3);
                 doc.line(margin, pageHeight / 2 - 10, pageWidth - margin, pageHeight / 2 - 10);
                 
                 // Subtítulo
@@ -383,28 +500,31 @@
                 
                 doc.line(margin, pageHeight / 2 + 5, pageWidth - margin, pageHeight / 2 + 5);
 
-                // Footer Portada (Fecha actualización)
+                // Footer Portada (AHORA EN NEGRO)
                 doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0); // Negro puro
+                doc.setFont("times", "bold");
                 doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, pageHeight - 40, { align: "center" });
                 
-                // Nota legal
+                // Nota Legal (AHORA EN NEGRO/GRIS OSCURO)
                 doc.setFontSize(8);
                 doc.setFont("times", "italic");
-                doc.setTextColor(100, 100, 100);
+                doc.setTextColor(60, 60, 60); // Gris muy oscuro casi negro
                 const splitLegal = doc.splitTextToSize(inputs.legalNote.value, pageWidth - (margin * 3));
                 doc.text(splitLegal, pageWidth / 2, pageHeight - 25, { align: "center" });
 
-                // --- PÁGINAS DE OBRA ---
+                // --- PÁGINAS DE OBRAS ---
                 for (let i = 0; i < artworks.length; i++) {
                     doc.addPage();
+                    addWatermark(); // Marca de agua en cada página
+
                     const art = artworks[i];
                     
-                    // Cargar imagen
+                    // Procesar imagen de la obra
                     const imgProps = await getImageProperties(art.image);
                     
-                    // Cálculo de dimensiones para la imagen (max 150mm alto, width full margin)
-                    const maxWidth = pageWidth - (margin * 2); // 170mm
-                    const maxHeight = 180; // Dejar espacio para pie de página
+                    const maxWidth = pageWidth - (margin * 2);
+                    const maxHeight = 175;
                     
                     let finalW = maxWidth;
                     let finalH = (imgProps.height * maxWidth) / imgProps.width;
@@ -414,63 +534,65 @@
                         finalW = (imgProps.width * maxHeight) / imgProps.height;
                     }
 
-                    // Centrar imagen
-                    const xPos = (pageWidth - finalW) / 2;
-                    const yPos = margin + ((maxHeight - finalH) / 2); // Centrado vertical en la zona superior
+                    const xPos = margin + (maxWidth - finalW) / 2;
+                    const yPos = margin + ((maxHeight - finalH) / 2) + 10; 
 
                     doc.addImage(art.image, 'JPEG', xPos, yPos, finalW, finalH);
 
-                    // Línea separadora
+                    // Línea inferior
                     const lineY = pageHeight - 50;
                     doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.2);
                     doc.line(margin, lineY, pageWidth - margin, lineY);
 
-                    // Caption: UNA SOLA LÍNEA
-                    // "Quantum III" | óleo sobre tela | 180 x 130 cm | COX
+                    // Datos Obra (EN NEGRO)
                     const caption = `"${art.title}" | ${art.medium} | ${art.dimensions} | ${art.code}`;
-                    
                     doc.setFont("times", "roman");
                     doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
-                    // Alinear a la derecha según el diseño
+                    doc.setTextColor(0, 0, 0); // Negro
                     doc.text(caption, pageWidth - margin, lineY + 8, { align: "right" });
 
-                    // Pie de página con número
-                    // Carlos Oviedo | Obra disponible Diciembre 2024 | pag.3
+                    // Pie de página (EN NEGRO/GRIS)
                     const footerY = pageHeight - 15;
                     const pageNum = i + 1;
                     const footerText = `${inputs.artistName.value} | ${inputs.footerAvailability.value} | pag.${pageNum}`;
                     
+                    doc.setDrawColor(220, 220, 220);
                     doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
                     doc.setFontSize(9);
-                    doc.setTextColor(80, 80, 80);
+                    doc.setTextColor(60, 60, 60); // Gris oscuro
                     doc.text(footerText, pageWidth - margin, footerY, { align: "right" });
                 }
 
-                // Guardar PDF
-                const fileName = `Catalogo_${inputs.artistName.value.replace(/\s+/g, '_')}.pdf`;
-                doc.save(fileName);
+                // Guardar
+                const cleanName = inputs.artistName.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                doc.save(`catalogo_${cleanName}.pdf`);
 
             } catch (error) {
-                console.error(error);
-                alert("Hubo un error al generar el PDF. Intenta con imágenes más ligeras.");
+                console.error("Error PDF Generation:", error);
+                alert("Hubo un error al generar el PDF. Verifica que el logo '1000039327.png' esté accesible.");
             } finally {
                 loader.classList.add('hidden');
             }
         }
 
-        // Helper para obtener dimensiones de imagen
         function getImageProperties(src) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => resolve({ width: img.width, height: img.height });
+                img.onerror = () => resolve({ width: 100, height: 100 });
                 img.src = src;
             });
         }
 
-        // Inicializar
-        updatePreview();
+        // Inicializar vista previa
+        // Esperamos a que cargue la imagen del logo para renderizar la primera vez
+        logoImage.onload = updatePreview;
+        // Fallback por si carga muy rápido o caché
+        if (logoImage.complete) updatePreview();
 
     </script>
 </body>
 </html>
+
+
