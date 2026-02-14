@@ -19,7 +19,7 @@
         .font-serif-pdf {
             font-family: 'Times New Roman', Times, serif;
         }
-        
+
         .font-sans-pdf {
             font-family: Arial, Helvetica, sans-serif;
         }
@@ -154,8 +154,7 @@
         <h3 class="text-xl font-serif-pdf text-slate-900 font-bold text-center">Exportando PDF...</h3>
     </div>
 
-    <script>
-        let artworks = [];
+    <script>let artworks = [];
         const { jsPDF } = window.jspdf;
         const LOGO_PATH = 'rtbrok_logo.png';
 
@@ -207,7 +206,8 @@
                         title: "TÍTULO DE LA OBRA",
                         medium: "ÓLEO SOBRE TELA",
                         dimensions: "120 x 100 CM",
-                        code: "CAT-" + Math.floor(1000 + Math.random() * 9000)
+                        code: "CAT-" + Math.floor(1000 + Math.random() * 9000),
+                        isUnique: false
                     };
                     artworks.push(artwork);
                     renderArtworkList();
@@ -229,25 +229,31 @@
                 const div = document.createElement('div');
                 div.className = 'bg-white p-3 rounded border border-gray-200 shadow-sm mb-3';
                 div.innerHTML = `
-                    <div class="flex gap-3 mb-2 items-start">
-                        <img src="${art.image}" class="w-16 h-16 object-cover rounded border">
-                        <div class="flex-1 space-y-2">
-                            <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value.toUpperCase())" class="w-full text-xs p-1 border rounded font-bold outline-none uppercase font-serif-pdf">
-                            <div class="grid grid-cols-2 gap-1">
-                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
-                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                        <div class="flex gap-3 mb-2 items-start">
+                            <img src="${art.image}" class="w-16 h-16 object-cover rounded border">
+                            <div class="flex-1 space-y-2">
+                                <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value.toUpperCase())" class="w-full text-xs p-1 border rounded font-bold outline-none uppercase font-serif-pdf">
+                                <div class="grid grid-cols-2 gap-1">
+                                    <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                                    <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
-                         <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value.toUpperCase())" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-20">
-                         <div class="flex gap-2">
-                             <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-up"></i></button>
-                             <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-down"></i></button>
-                             <button onclick="deleteArtwork('${art.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                         </div>
-                    </div>
-                `;
+                        <div class="flex justify-between items-center text-xs">
+                             <div class="flex items-center gap-2">
+                                <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value.toUpperCase())" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-16">
+                                <label class="flex items-center text-[9px] text-gray-500 cursor-pointer">
+                                    <input type="checkbox" ${art.isUnique ? 'checked' : ''} onchange="updateArtwork('${art.id}', 'isUnique', this.checked)" class="mr-1">
+                                    Obra única
+                                </label>
+                             </div>
+                             <div class="flex gap-2">
+                                 <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-up"></i></button>
+                                 <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-down"></i></button>
+                                 <button onclick="deleteArtwork('${art.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                             </div>
+                        </div>
+                    `;
                 artworkList.appendChild(div);
             });
         }
@@ -278,47 +284,51 @@
             const cover = document.createElement('div');
             cover.className = 'preview-page p-12 flex flex-col items-center justify-center text-center font-serif-pdf';
             cover.innerHTML = `
-                <div class="absolute inset-0 flex items-center justify-center opacity-10 grayscale z-0 overflow-hidden">
-                     <img src="${LOGO_PATH}" class="w-[300mm] max-w-none transform translate-y-4" onerror="this.style.display='none'">
-                </div>
-                <div class="relative z-10 flex flex-col items-center">
-                    <h1 class="text-4xl tracking-[0.3em] mb-4 font-normal uppercase">${artistVal}</h1>
-                    <h2 class="text-xs tracking-[0.4em] uppercase opacity-60 mb-32">${subVal}</h2>
-                    
-                    <div class="mt-20">
-                        <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase mb-3 font-bold">${inputs.updateText.value}</p>
-                        <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-10 grayscale z-0 overflow-hidden">
+                         <img src="${LOGO_PATH}" class="w-[300mm] max-w-none transform translate-y-4" onerror="this.style.display='none'">
                     </div>
-                </div>
-            `;
+                    <div class="relative z-10 flex flex-col items-center">
+                        <h1 class="text-4xl tracking-[0.3em] mb-4 font-normal uppercase">${artistVal}</h1>
+                        <h2 class="text-xs tracking-[0.4em] uppercase opacity-60 mb-32">${subVal}</h2>
+
+                        <div class="mt-20">
+                            <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase mb-3 font-bold">${inputs.updateText.value}</p>
+                            <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
+                        </div>
+                    </div>
+                `;
             previewContainer.appendChild(cover);
 
             artworks.forEach((art, i) => {
                 const page = document.createElement('div');
                 page.className = 'preview-page p-12 flex flex-col justify-between font-serif-pdf';
                 page.innerHTML = `
-                    <div class="flex-1 flex items-center justify-center py-6">
-                        <img src="${art.image}" class="max-h-[80%] max-w-full object-contain shadow-2xl relative z-10">
-                    </div>
-                    <div class="relative">
-                        <img src="${LOGO_PATH}" class="absolute right-[-20px] bottom-10 w-48 opacity-[0.07] grayscale pointer-events-none z-0" onerror="this.style.display='none'">
-                        <div class="border-t border-black pt-4 mb-4 relative z-10 text-right">
-                            <p class="text-base tracking-tight">
-                                <span class="italic font-bold">"${art.title}"</span>
-                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
-                                <span class="text-[11px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>
-                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
-                                <span class="text-[11px] font-sans-pdf">${art.dimensions}</span>
-                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
-                                <span class="text-[10px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
-                            </p>
+                        <div class="flex-1 flex items-center justify-center py-6">
+                            <img src="${art.image}" class="max-h-[80%] max-w-full object-contain shadow-2xl relative z-10">
                         </div>
-                        <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10">
-                             <p class="font-bold">${artistVal}</p>
-                             <p>PÁGINA ${i + 1}</p>
+                        <div class="relative">
+                            <img src="${LOGO_PATH}" class="absolute right-[-20px] bottom-10 w-48 opacity-[0.07] grayscale pointer-events-none z-0" onerror="this.style.display='none'">
+                            <div class="border-t border-black pt-4 mb-4 relative z-10 text-right">
+                                <p class="text-base tracking-tight">
+                                    <span class="italic font-bold">"${art.title}"</span>
+                                    ${art.isUnique ? `
+                                        <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                        <span class="text-[10px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span>
+                                    ` : ''}
+                                    <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                    <span class="text-[11px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>
+                                    <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                    <span class="text-[11px] font-sans-pdf">${art.dimensions}</span>
+                                    <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                    <span class="text-[10px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
+                                </p>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10">
+                                 <p class="font-bold">${artistVal}</p>
+                                 <p>PÁGINA ${i + 1}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 previewContainer.appendChild(page);
             });
         }
@@ -342,7 +352,7 @@
                         reader.onload = () => resolve(reader.result);
                         reader.readAsDataURL(blob);
                     });
-                } catch (e) {}
+                } catch (e) { }
 
                 // --- PORTADA ---
                 if (logoData) {
@@ -355,24 +365,21 @@
 
                 const anchorY = 120;
                 doc.setTextColor(0);
-                
-                // Título principal con Tracking manual para igualar la preview
+
                 doc.setFont("times", "normal");
                 doc.setFontSize(32);
                 const spacedTitle = artistVal.toUpperCase().split('').join('  ');
                 doc.text(spacedTitle, pageWidth / 2, anchorY, { align: "center" });
-                
-                // Subtítulo
+
                 doc.setFontSize(10);
                 const spacedSub = subVal.toUpperCase().split('').join('   ');
                 doc.text(spacedSub, pageWidth / 2, anchorY + 12, { align: "center" });
 
-                // Footer Portada
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
                 const spacedDate = inputs.updateText.value.toUpperCase().split('').join(' ');
                 doc.text(spacedDate, pageWidth / 2, pageHeight - 50, { align: "center" });
-                
+
                 doc.setFont("helvetica", "italic");
                 doc.setFontSize(8);
                 doc.setTextColor(100);
@@ -383,22 +390,20 @@
                 for (let i = 0; i < artworks.length; i++) {
                     doc.addPage();
                     const art = artworks[i];
-                    
+
                     const margin = 25;
                     const maxW = pageWidth - (margin * 2);
                     const maxH = 180;
-                    
+
                     const img = new Image();
                     img.src = art.image;
                     await new Promise(r => img.onload = r);
-                    
+
                     let rW = maxW, rH = (img.height * maxW) / img.width;
                     if (rH > maxH) { rH = maxH; rW = (img.width * maxH) / img.height; }
 
-                    // Imagen
                     doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
 
-                    // Logo esquinado
                     if (logoData) {
                         doc.saveGraphicsState();
                         doc.setGState(new doc.GState({ opacity: 0.06 }));
@@ -406,24 +411,29 @@
                         doc.restoreGraphicsState();
                     }
 
-                    // Información Obra
                     const infoY = 255;
                     doc.setDrawColor(0);
                     doc.setLineWidth(0.3);
                     doc.line(margin, infoY, pageWidth - margin, infoY);
-                    
+
                     doc.setTextColor(0);
                     doc.setFont("times", "bolditalic");
                     doc.setFontSize(14);
                     doc.text(`"${art.title}"`, pageWidth - margin, infoY + 8, { align: "right" });
-                    
+
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(9);
                     doc.setTextColor(80);
-                    const details = `${art.medium}   |   ${art.dimensions}   |   ${art.code}`;
+
+                    let detailParts = [];
+                    if (art.isUnique) detailParts.push("OBRA ÚNICA");
+                    detailParts.push(art.medium);
+                    detailParts.push(art.dimensions);
+                    detailParts.push(art.code);
+
+                    const details = detailParts.join('   |   ');
                     doc.text(details.toUpperCase(), pageWidth - margin, infoY + 16, { align: "right" });
 
-                    // Pie de página
                     doc.setFontSize(8);
                     doc.setTextColor(160);
                     doc.setFont("helvetica", "bold");
@@ -439,7 +449,6 @@
                 loader.classList.add('hidden');
             }
         }
-        updatePreview();
-    </script>
+        updatePreview();</script>
 </body>
 </html>
