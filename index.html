@@ -322,7 +322,7 @@
                         
                         <div class="mb-4 relative z-10 text-right w-full">
                             <p class="text-base tracking-tight leading-relaxed">
-                                <span class="italic">"${art.title}"</span>
+                                <span class="italic font-bold">"${art.title}"</span>
                                 ${art.isUnique ? `
                                     <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
                                     <span class="text-[10px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span>
@@ -425,7 +425,7 @@
 
                     const infoY = 250;
                     doc.setTextColor(0);
-                    doc.setFont("times", "italic"); // Cambiado de bolditalic a italic
+                    doc.setFont("times", "bolditalic");
                     doc.setFontSize(14);
                     doc.text(`"${art.title}"`, pageWidth - margin, infoY + 8, { align: "right" });
                     
