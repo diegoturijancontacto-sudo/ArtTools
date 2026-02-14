@@ -292,9 +292,11 @@
             const cover = document.createElement('div');
             cover.className = 'preview-page p-12 flex flex-col items-center justify-between text-center font-serif-pdf';
             cover.innerHTML = `
+                <!-- Logo como fondo absoluto -->
                 <div class="absolute inset-0 flex items-center justify-center opacity-10 grayscale z-0 overflow-hidden pointer-events-none">
-                     <img src="${LOGO_PATH}" class="w-[75mm] max-w-none transform translate-y-[-10px]" onerror="this.style.display='none'">
+                     <img src="${LOGO_PATH}" class="w-[85mm] max-w-none" onerror="this.style.display='none'">
                 </div>
+
                 <!-- Bloque superior: Título y Subtítulo -->
                 <div class="relative z-10 flex flex-col items-center w-full mt-24">
                     <h1 class="tracking-[0.3em] mb-4 font-normal uppercase px-4" style="font-size: ${titleSize}; line-height: 1.1;">${artistVal}</h1>
@@ -376,12 +378,12 @@
                 if (logoData) {
                     doc.saveGraphicsState();
                     doc.setGState(new doc.GState({ opacity: 0.08 }));
-                    const logoSize = 75; 
+                    const logoSize = 85; 
                     doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, (pageHeight - logoSize) / 2, logoSize, logoSize);
                     doc.restoreGraphicsState();
                 }
 
-                // Título y Subtítulo (Y: ~80)
+                // Título y Subtítulo (Y inicial: 85)
                 const titleY = 85;
                 doc.setTextColor(0);
                 doc.setFont("times", "normal");
@@ -393,7 +395,7 @@
                 const spacedSub = subVal.toUpperCase().split('').join('   ');
                 doc.text(spacedSub, pageWidth / 2, titleY + 12, { align: "center" });
 
-                // Nota Legal (Y: ~260)
+                // Nota Legal (Y final: 265)
                 const legalY = 265;
                 doc.setFont("helvetica", "italic");
                 doc.setFontSize(8);
@@ -401,7 +403,7 @@
                 const legalLines = doc.splitTextToSize(inputs.legalNote.value, 110);
                 doc.text(legalLines, pageWidth / 2, legalY, { align: "center" });
 
-                // Fecha: Centrada entre el bloque de subtítulo y la nota legal
+                // Fecha: Centrada entre el bloque de subtítulo (Y: titleY + 12) y la nota legal (Y: legalY)
                 const dateY = (titleY + 12 + legalY) / 2;
                 doc.setTextColor(0);
                 doc.setFont("helvetica", "bold");
