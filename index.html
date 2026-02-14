@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Generador de Catálogo de Arte - Carlos Oviedo Estilo</title>
+    <title>Generador de Catálogo de Arte - Estilo RTBROK</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Importación de fuentes locales simulada y Google Fonts para el editor */
         @import url('https://fonts.googleapis.com/css2?family=Ibarra+Real+Nova:ital,wght@0,400..700;1,400..700&family=Roboto:wght@300;400;700&display=swap');
 
         body {
@@ -20,12 +19,11 @@
             font-family: 'Ibarra Real Nova', serif;
         }
 
-        /* Vista previa en pantalla simula papel */
         .preview-page {
             background: white;
             width: 100%;
-            aspect-ratio: 210/297; /* A4 Ratio */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            aspect-ratio: 210/297;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             position: relative;
             overflow: hidden;
             display: flex;
@@ -39,6 +37,17 @@
             backdrop-filter: blur(5px);
         }
 
+        .watermark-bg {
+            position: absolute;
+            right: 2rem;
+            bottom: 3.5rem;
+            width: 120px;
+            opacity: 0.1;
+            filter: grayscale(1);
+            pointer-events: none;
+            z-index: 0;
+        }
+
         @media (max-width: 768px) {
             .mobile-fab-container {
                 position: fixed;
@@ -47,7 +56,6 @@
                 right: 0;
                 background: white;
                 padding: 1rem;
-                box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
                 z-index: 50;
                 border-top: 1px solid #e5e7eb;
             }
@@ -74,7 +82,6 @@
         
         <div class="hidden md:block p-5 bg-slate-900 text-white shadow-md shrink-0">
             <h1 class="text-xl font-bold font-serif-custom"><i class="fas fa-palette mr-2"></i>Catálogo Pro</h1>
-            <p class="text-xs text-slate-300 mt-1">Fuentes: Ibarra Real Nova & Roboto</p>
         </div>
 
         <div class="flex-1 p-5 space-y-6 overflow-y-auto content-padding-bottom">
@@ -83,17 +90,17 @@
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center">
                     <span class="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs mr-2">1</span>
-                    Datos Portada
+                    Configuración Portada
                 </h2>
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">Artista</label>
-                        <input type="text" id="artistName" value="CARLOS OVIEDO" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Nombre / Artista</label>
+                        <input type="text" id="artistName" value="" placeholder="Dejar vacío para 'CATÁLOGO'" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Subtítulo</label>
-                        <input type="text" id="catalogSubtitle" value="CATÁLOGO DE OBRA DISPONIBLE" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
+                        <input type="text" id="catalogSubtitle" value="OBRA GENERAL" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-calendar-alt mr-1"></i> Fecha</label>
@@ -101,7 +108,7 @@
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-file-contract mr-1"></i> Nota Legal</label>
-                        <textarea id="legalNote" rows="2" class="w-full text-xs p-2 border-l-4 border-slate-400 bg-white rounded text-gray-700 focus:ring-1 focus:ring-slate-500 outline-none">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
+                        <textarea id="legalNote" rows="2" class="w-full text-[10px] p-2 border-l-4 border-slate-400 bg-white rounded text-gray-700 focus:ring-1 focus:ring-slate-500 outline-none">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
                     </div>
                 </div>
             </div>
@@ -126,18 +133,6 @@
                 </div>
             </div>
 
-            <!-- 3. PIE DE PÁGINA -->
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
-                <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center">
-                    <span class="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs mr-2">3</span>
-                    Pie de Página
-                </h2>
-                <div>
-                    <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-info-circle mr-1"></i> Disponibilidad</label>
-                    <input type="text" id="footerAvailability" value="Obra disponible 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded text-black focus:ring-1 focus:ring-slate-500 outline-none">
-                </div>
-            </div>
-            
             <div class="h-16 md:hidden"></div>
         </div>
 
@@ -150,7 +145,7 @@
 
     <!-- SECCIÓN DERECHA: VISTA PREVIA -->
     <main id="previewPanel" class="hidden md:block w-full md:flex-1 bg-gray-200 md:h-full md:overflow-y-auto p-4 md:p-8 relative z-0">
-        <div class="max-w-[600px] mx-auto content-padding-bottom" id="previewContainer"></div>
+        <div class="max-w-[550px] mx-auto content-padding-bottom" id="previewContainer"></div>
     </main>
 
     <!-- BOTÓN FLOTANTE MÓVIL -->
@@ -163,13 +158,13 @@
     <!-- Loader -->
     <div id="loader" class="fixed inset-0 loading-overlay hidden z-50 flex items-center justify-center flex-col px-4">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-slate-900 mb-4"></div>
-        <h3 class="text-xl font-serif-custom text-slate-900 font-bold text-center">Generando PDF...</h3>
-        <p class="text-gray-500 text-center mt-2">Procesando fuentes Ibarra Real Nova y Roboto</p>
+        <h3 class="text-xl font-serif-custom text-slate-900 font-bold text-center">Generando Archivo...</h3>
     </div>
 
     <script>
         let artworks = [];
         const { jsPDF } = window.jspdf;
+        const LOGO_PATH = 'rtbrok_logo.png'; // Ruta automática solicitada
 
         // Referencias
         const imageInput = document.getElementById('imageInput');
@@ -181,11 +176,10 @@
             artistName: document.getElementById('artistName'),
             subtitle: document.getElementById('catalogSubtitle'),
             updateText: document.getElementById('updateText'),
-            legalNote: document.getElementById('legalNote'),
-            footerAvailability: document.getElementById('footerAvailability')
+            legalNote: document.getElementById('legalNote')
         };
 
-        // Listeners para actualización en tiempo real
+        // Event Listeners
         Object.keys(inputs).forEach(key => {
             inputs[key].addEventListener('input', updatePreview);
         });
@@ -250,15 +244,15 @@
                     <div class="flex gap-3 mb-2 items-start">
                         <img src="${art.image}" class="w-16 h-16 object-cover rounded border">
                         <div class="flex-1 space-y-2">
-                            <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value)" class="w-full text-sm p-1 border rounded font-bold outline-none">
+                            <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value)" class="w-full text-xs p-1 border rounded font-bold outline-none">
                             <div class="grid grid-cols-2 gap-1">
-                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value)" class="text-[10px] p-1 border rounded outline-none">
-                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value)" class="text-[10px] p-1 border rounded outline-none">
+                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value)" class="text-[9px] p-1 border rounded outline-none">
+                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value)" class="text-[9px] p-1 border rounded outline-none">
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                         <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value)" class="text-[10px] p-1 border rounded bg-gray-50 outline-none w-24">
+                         <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value)" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-20">
                          <div class="flex gap-2">
                              <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-up"></i></button>
                              <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-down"></i></button>
@@ -276,11 +270,9 @@
         }
 
         function deleteArtwork(id) {
-            if(confirm('¿Eliminar?')) {
-                artworks = artworks.filter(a => a.id != id);
-                renderArtworkList();
-                updatePreview();
-            }
+            artworks = artworks.filter(a => a.id != id);
+            renderArtworkList();
+            updatePreview();
         }
 
         function moveArtwork(index, direction) {
@@ -289,55 +281,59 @@
             renderArtworkList(); updatePreview();
         }
 
-        // --- RENDER VISTA PREVIA ---
         function updatePreview() {
             previewContainer.innerHTML = '';
             
-            // Constante para opacidad de marca de agua (igual que en PDF)
-            const WATERMARK_OPACITY = 0.1;
+            const artistVal = inputs.artistName.value.trim();
+            const mainTitle = artistVal === "" ? "CATÁLOGO" : artistVal.toUpperCase();
 
-            // Portada
+            // --- PORTADA ---
             const cover = document.createElement('div');
-            cover.className = 'preview-page p-12 flex flex-col justify-between items-center text-center font-serif-custom';
-            cover.style.position = 'relative';
+            cover.className = 'preview-page p-12 flex flex-col font-serif-custom';
             cover.innerHTML = `
-                <img src="rtbrok_logo.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; opacity: ${WATERMARK_OPACITY}; z-index: 0;" alt="" onerror="this.style.display='none'">
-                <div class="mt-20" style="position: relative; z-index: 1;">
-                    <h1 class="text-4xl tracking-[0.2em] mb-4 uppercase font-bold">${inputs.artistName.value}</h1>
-                    <div class="w-24 h-px bg-black mx-auto my-4"></div>
-                    <h2 class="text-lg tracking-widest uppercase opacity-80">${inputs.subtitle.value}</h2>
-                </div>
-                <div class="mb-10" style="position: relative; z-index: 1;">
-                    <p class="text-sm font-bold tracking-widest uppercase border-y border-black py-2 inline-block px-4 mb-4">${inputs.updateText.value}</p>
-                    <p class="text-[10px] text-gray-500 font-sans leading-relaxed max-w-xs mx-auto italic">${inputs.legalNote.value}</p>
+                <div class="flex-1"></div>
+                <div class="w-full flex flex-col items-center mb-16">
+                    <div class="text-center mb-12">
+                        <h1 class="text-3xl tracking-[0.4em] mb-1 font-normal">${mainTitle}</h1>
+                        <h2 class="text-[11px] tracking-[0.3em] uppercase opacity-70">${inputs.subtitle.value}</h2>
+                    </div>
+                    <div class="w-full flex flex-col items-center">
+                        <img src="${LOGO_PATH}" class="w-20 mb-8 opacity-20 grayscale" onerror="this.style.display='none'">
+                        <div class="w-full text-center">
+                            <p class="text-[9px] font-sans tracking-[0.25em] uppercase mb-2 font-bold">${inputs.updateText.value}</p>
+                            <p class="text-[8px] text-gray-500 font-sans leading-relaxed max-w-[280px] mx-auto italic">${inputs.legalNote.value}</p>
+                        </div>
+                    </div>
                 </div>
             `;
             previewContainer.appendChild(cover);
 
-            // Páginas
+            // --- PÁGINAS DE OBRAS ---
             artworks.forEach((art, i) => {
                 const page = document.createElement('div');
                 page.className = 'preview-page p-12 flex flex-col justify-between font-serif-custom';
                 page.innerHTML = `
-                    <div class="flex-1 flex items-center justify-center py-8">
-                        <img src="${art.image}" class="max-h-full max-w-full object-contain shadow-lg">
+                    <div class="flex-1 flex items-center justify-center py-4">
+                        <img src="${art.image}" class="max-h-[75%] max-w-full object-contain shadow-2xl relative z-10">
                     </div>
-                    <div>
-                        <div class="border-t border-black pt-4 mb-8">
-                            <p class="text-right text-lg font-serif-custom">
+                    <div class="relative">
+                        <!-- Marca de agua RTBROK alineada detrás del texto -->
+                        <img src="${LOGO_PATH}" class="watermark-bg" onerror="this.style.display='none'">
+                        
+                        <div class="border-t border-black pt-3 mb-6 relative z-10">
+                            <p class="text-right text-base">
                                 <span class="italic">"${art.title}"</span> 
-                                <span class="text-xs font-sans mx-2">|</span> 
-                                <span class="text-sm font-sans uppercase">${art.medium}</span>
-                                <span class="text-xs font-sans mx-2">|</span>
-                                <span class="text-sm font-sans">${art.dimensions}</span>
-                                <span class="text-xs font-sans mx-2">|</span>
-                                <span class="text-xs font-sans bg-gray-100 px-2 py-0.5">${art.code}</span>
+                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span> 
+                                <span class="text-[11px] font-sans uppercase tracking-tight">${art.medium}</span>
+                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span>
+                                <span class="text-[11px] font-sans">${art.dimensions}</span>
+                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span>
+                                <span class="text-[9px] font-sans bg-gray-50 px-2 py-0.5 border">${art.code}</span>
                             </p>
                         </div>
-                        <div class="flex justify-between items-center border-t border-gray-200 pt-2 font-sans text-[9px] text-gray-400">
-                             <p class="uppercase tracking-widest">${inputs.artistName.value}</p>
-                             <p>${inputs.footerAvailability.value}</p>
-                             <p>PAG. ${i + 1}</p>
+                        <div class="flex justify-between items-center pt-2 font-sans text-[8px] text-gray-400 uppercase tracking-widest relative z-10">
+                             <p>${artistVal || 'CATÁLOGO'}</p>
+                             <p>PÁGINA ${i + 1}</p>
                         </div>
                     </div>
                 `;
@@ -345,138 +341,92 @@
             });
         }
 
-        // --- GENERACIÓN PDF ---
         async function generatePDF() {
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
 
             try {
-                // Pequeño delay para asegurar que el loader se vea
-                await new Promise(r => setTimeout(r, 500));
-
                 const doc = new jsPDF('p', 'mm', 'a4');
                 const pageWidth = 210;
                 const pageHeight = 297;
-                const margin = 20;
+                const artistVal = inputs.artistName.value.trim();
+                const mainTitle = artistVal === "" ? "CATÁLOGO" : artistVal.toUpperCase();
 
-                // Nota: En un entorno real, cargaríamos los .ttf locales con fetch y los pasaríamos a base64
-                // Aquí usamos las fuentes estándar de jsPDF mapeadas a lo solicitado
-                // "times" para Ibarra Real Nova y "helvetica" para Roboto
+                // Cargar logo para el PDF
+                let logoData = null;
+                try {
+                    const response = await fetch(LOGO_PATH);
+                    const blob = await response.blob();
+                    logoData = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                } catch(e) { console.warn("Logo no encontrado para el PDF"); }
 
                 // --- PORTADA ---
-                
-                // Agregar logo como marca de agua en el fondo
-                const WATERMARK_OPACITY = 0.1;
-                const logoImg = new Image();
-                logoImg.src = 'rtbrok_logo.png';
-                await new Promise((resolve, reject) => {
-                    logoImg.onload = resolve;
-                    logoImg.onerror = (error) => {
-                        console.warn('Logo watermark could not be loaded from rtbrok_logo.png:', error);
-                        resolve(); // Continue even if logo fails to load
-                    };
-                });
-                
-                // Si el logo se cargó correctamente, agregarlo como marca de agua
-                if (logoImg.complete && logoImg.naturalWidth > 0) {
-                    // Centrar el logo y hacerlo grande pero translúcido
-                    // Nota: 80mm en PDF ≈ 200px en preview (escala similar visualmente)
-                    const logoSize = 80; // Tamaño del logo en mm
-                    const logoX = (pageWidth - logoSize) / 2;
-                    const logoY = (pageHeight - logoSize) / 2;
-                    
-                    // Guardar el estado gráfico actual
+                const anchorY = 205; 
+                doc.setFont("times", "normal");
+                doc.setFontSize(26);
+                doc.text(mainTitle, pageWidth / 2, anchorY, { align: "center", charSpace: 2 });
+                doc.setFontSize(9);
+                doc.text(inputs.subtitle.value.toUpperCase(), pageWidth / 2, anchorY + 8, { align: "center", charSpace: 1.5 });
+
+                if (logoData) {
                     doc.saveGraphicsState();
-                    // Establecer opacidad para el efecto de marca de agua
-                    doc.setGState(new doc.GState({ opacity: WATERMARK_OPACITY }));
-                    doc.addImage(logoImg.src, 'PNG', logoX, logoY, logoSize, logoSize);
-                    // Restaurar el estado gráfico
+                    doc.setGState(new doc.GState({ opacity: 0.15 }));
+                    doc.addImage(logoData, 'PNG', (pageWidth - 20)/2, anchorY + 15, 20, 20);
                     doc.restoreGraphicsState();
                 }
-                
-                doc.setFont("times", "bold");
-                doc.setFontSize(32);
-                doc.setTextColor(0, 0, 0);
-                // Usar maxWidth en lugar de charSpace para mejor control del centrado
-                const artistNameWidth = pageWidth - 60;
-                doc.text(inputs.artistName.value.toUpperCase(), pageWidth / 2, 100, { 
-                    align: "center", 
-                    maxWidth: artistNameWidth 
-                });
 
-                doc.setDrawColor(0);
-                doc.setLineWidth(0.5);
-                doc.line(pageWidth/2 - 15, 110, pageWidth/2 + 15, 110);
-
-                doc.setFont("times", "normal");
-                doc.setFontSize(14);
-                doc.text(inputs.subtitle.value.toUpperCase(), pageWidth / 2, 125, { 
-                    align: "center", 
-                    maxWidth: pageWidth - 60 
-                });
-
-                // Fecha y Legal (Todo en NEGRO)
                 doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, pageHeight - 50, { align: "center" });
-                
-                doc.setFont("helvetica", "italic");
                 doc.setFontSize(8);
-                doc.setTextColor(80);
-                const legalLines = doc.splitTextToSize(inputs.legalNote.value, pageWidth - 60);
-                doc.text(legalLines, pageWidth / 2, pageHeight - 35, { align: "center" });
+                doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, pageHeight - 40, { align: "center", charSpace: 1 });
+                doc.setFont("helvetica", "italic");
+                doc.setFontSize(7);
+                doc.setTextColor(100);
+                const legalLines = doc.splitTextToSize(inputs.legalNote.value, 110);
+                doc.text(legalLines, pageWidth / 2, pageHeight - 33, { align: "center" });
 
                 // --- OBRAS ---
                 for (let i = 0; i < artworks.length; i++) {
                     doc.addPage();
                     const art = artworks[i];
                     
-                    // Imagen
                     const img = new Image();
                     img.src = art.image;
                     await new Promise(r => img.onload = r);
 
+                    const margin = 25;
                     const maxW = pageWidth - (margin * 2);
-                    const maxH = 180;
-                    let renderW = maxW;
-                    let renderH = (img.height * maxW) / img.width;
+                    const maxH = 175;
+                    let rW = maxW, rH = (img.height * maxW) / img.width;
+                    if (rH > maxH) { rH = maxH; rW = (img.width * maxH) / img.height; }
 
-                    if (renderH > maxH) {
-                        renderH = maxH;
-                        renderW = (img.width * maxH) / img.height;
+                    doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
+
+                    // Logo Marca de agua detrás del texto
+                    if (logoData) {
+                        doc.saveGraphicsState();
+                        doc.setGState(new doc.GState({ opacity: 0.1 }));
+                        doc.addImage(logoData, 'PNG', pageWidth - margin - 35, 235, 30, 30);
+                        doc.restoreGraphicsState();
                     }
 
-                    const x = margin + (maxW - renderW) / 2;
-                    const y = 30 + (maxH - renderH) / 2;
-                    doc.addImage(art.image, 'JPEG', x, y, renderW, renderH);
-
-                    // Información Obra
-                    const infoY = 240;
+                    const infoY = 245;
                     doc.setDrawColor(0);
-                    doc.setLineWidth(0.3);
                     doc.line(margin, infoY, pageWidth - margin, infoY);
-
                     doc.setTextColor(0);
                     doc.setFont("times", "italic");
-                    doc.setFontSize(14);
-                    const titleText = `"${art.title}"`;
-                    doc.text(titleText, pageWidth - margin, infoY + 8, { align: "right" });
-
+                    doc.setFontSize(13);
+                    doc.text(`"${art.title}"`, pageWidth - margin, infoY + 7, { align: "right" });
                     doc.setFont("helvetica", "normal");
-                    doc.setFontSize(10);
-                    const technicalText = `${art.medium}  |  ${art.dimensions}  |  ${art.code}`;
-                    doc.text(technicalText, pageWidth - margin, infoY + 16, { align: "right" });
-
-                    // Footer
-                    doc.setDrawColor(200);
-                    doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text(inputs.artistName.value.toUpperCase(), margin, pageHeight - 10);
-                    doc.text(`PÁGINA ${i + 1}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+                    doc.setFontSize(9);
+                    doc.setTextColor(60);
+                    doc.text(`${art.medium}  |  ${art.dimensions}  |  ${art.code}`, pageWidth - margin, infoY + 13, { align: "right" });
                 }
 
-                doc.save(`CATALOGO_${inputs.artistName.value.replace(/\s+/g, '_')}.pdf`);
+                doc.save(`CATALOGO_${(artistVal || 'GENERAL').replace(/\s+/g, '_')}.pdf`);
             } catch (e) {
                 console.error(e);
             } finally {
@@ -484,7 +434,6 @@
             }
         }
 
-        // Inicializar
         updatePreview();
     </script>
 </body>
