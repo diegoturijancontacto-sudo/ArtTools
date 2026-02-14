@@ -101,7 +101,7 @@
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-calendar-alt mr-1"></i> Fecha</label>
-                        <input type="text" id="updateText" value="ACTUALIZACIÓN FEBRERO 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded font-sans-pdf font-bold focus:ring-1 focus:ring-slate-500 outline-none">
+                        <input type="text" id="updateText" value="ACTUALIZACIÓN FEBRERO 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded font-sans-pdf focus:ring-1 focus:ring-slate-500 outline-none">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-file-contract mr-1"></i> Legal</label>
@@ -290,19 +290,25 @@
 
             // PORTADA
             const cover = document.createElement('div');
-            cover.className = 'preview-page p-12 flex flex-col items-center justify-center text-center font-serif-pdf';
+            cover.className = 'preview-page p-12 flex flex-col items-center justify-between text-center font-serif-pdf';
             cover.innerHTML = `
                 <div class="absolute inset-0 flex items-center justify-center opacity-10 grayscale z-0 overflow-hidden pointer-events-none">
                      <img src="${LOGO_PATH}" class="w-[75mm] max-w-none transform translate-y-[-10px]" onerror="this.style.display='none'">
                 </div>
-                <div class="relative z-10 flex flex-col items-center w-full">
+                <!-- Bloque superior: Título y Subtítulo -->
+                <div class="relative z-10 flex flex-col items-center w-full mt-24">
                     <h1 class="tracking-[0.3em] mb-4 font-normal uppercase px-4" style="font-size: ${titleSize}; line-height: 1.1;">${artistVal}</h1>
-                    <h2 class="text-xs tracking-[0.4em] uppercase opacity-60 mb-32">${subVal}</h2>
-                    
-                    <div class="mt-20">
-                        <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase mb-3 font-bold">${inputs.updateText.value}</p>
-                        <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
-                    </div>
+                    <h2 class="text-xs tracking-[0.4em] uppercase opacity-60">${subVal}</h2>
+                </div>
+                
+                <!-- Bloque Central: Fecha (entre el título y la nota legal) -->
+                <div class="relative z-10 w-full flex flex-col items-center">
+                    <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase font-bold text-slate-800">${inputs.updateText.value}</p>
+                </div>
+
+                <!-- Bloque inferior: Nota Legal -->
+                <div class="relative z-10 w-full mb-12">
+                    <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
                 </div>
             `;
             previewContainer.appendChild(cover);
@@ -315,14 +321,13 @@
                         <img src="${art.image}" class="max-h-[85%] max-w-full object-contain shadow-xl relative z-10">
                     </div>
                     <div class="relative pt-8 flex flex-col items-center">
-                        <!-- Logo Centrado como Pie de Página -->
                         <div class="w-full flex justify-center mb-4 opacity-[0.05] grayscale pointer-events-none">
                              <img src="${LOGO_PATH}" class="w-40" onerror="this.style.display='none'">
                         </div>
                         
                         <div class="mb-4 relative z-10 text-right w-full">
                             <p class="text-base tracking-tight leading-relaxed">
-                                <span class="italic font-bold">"${art.title}"</span>
+                                <span class="italic">"${art.title}"</span>
                                 ${art.isUnique ? `
                                     <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
                                     <span class="text-[10px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span>
@@ -372,30 +377,36 @@
                     doc.saveGraphicsState();
                     doc.setGState(new doc.GState({ opacity: 0.08 }));
                     const logoSize = 75; 
-                    doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, 115 - (logoSize / 2), logoSize, logoSize);
+                    doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, (pageHeight - logoSize) / 2, logoSize, logoSize);
                     doc.restoreGraphicsState();
                 }
 
-                const anchorY = 120;
+                // Título y Subtítulo (Y: ~80)
+                const titleY = 85;
                 doc.setTextColor(0);
                 doc.setFont("times", "normal");
                 doc.setFontSize(pdfTitleSize);
                 const spacedTitle = artistVal.toUpperCase().split('').join('  ');
-                doc.text(spacedTitle, pageWidth / 2, anchorY, { align: "center", maxWidth: 170 });
+                doc.text(spacedTitle, pageWidth / 2, titleY, { align: "center", maxWidth: 170 });
                 
                 doc.setFontSize(10);
                 const spacedSub = subVal.toUpperCase().split('').join('   ');
-                doc.text(spacedSub, pageWidth / 2, anchorY + 15, { align: "center" });
+                doc.text(spacedSub, pageWidth / 2, titleY + 12, { align: "center" });
 
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(9);
-                doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, pageHeight - 50, { align: "center" });
-                
+                // Nota Legal (Y: ~260)
+                const legalY = 265;
                 doc.setFont("helvetica", "italic");
                 doc.setFontSize(8);
                 doc.setTextColor(100);
                 const legalLines = doc.splitTextToSize(inputs.legalNote.value, 110);
-                doc.text(legalLines, pageWidth / 2, pageHeight - 42, { align: "center" });
+                doc.text(legalLines, pageWidth / 2, legalY, { align: "center" });
+
+                // Fecha: Centrada entre el bloque de subtítulo y la nota legal
+                const dateY = (titleY + 12 + legalY) / 2;
+                doc.setTextColor(0);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, dateY, { align: "center" });
 
                 // --- OBRAS ---
                 for (let i = 0; i < artworks.length; i++) {
@@ -414,7 +425,6 @@
 
                     doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
 
-                    // Logo centrado en el pie de página
                     if (logoData) {
                         doc.saveGraphicsState();
                         doc.setGState(new doc.GState({ opacity: 0.04 }));
@@ -425,7 +435,7 @@
 
                     const infoY = 250;
                     doc.setTextColor(0);
-                    doc.setFont("times", "bolditalic");
+                    doc.setFont("times", "italic");
                     doc.setFontSize(14);
                     doc.text(`"${art.title}"`, pageWidth - margin, infoY + 8, { align: "right" });
                     
