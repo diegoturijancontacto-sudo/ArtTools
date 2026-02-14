@@ -314,10 +314,13 @@
                     <div class="flex-1 flex items-center justify-center py-6">
                         <img src="${art.image}" class="max-h-[85%] max-w-full object-contain shadow-xl relative z-10">
                     </div>
-                    <div class="relative pt-8">
-                        <img src="${LOGO_PATH}" class="absolute right-[-20px] bottom-10 w-48 opacity-[0.05] grayscale pointer-events-none z-0" onerror="this.style.display='none'">
+                    <div class="relative pt-8 flex flex-col items-center">
+                        <!-- Logo Centrado como Pie de Página -->
+                        <div class="w-full flex justify-center mb-4 opacity-[0.05] grayscale pointer-events-none">
+                             <img src="${LOGO_PATH}" class="w-40" onerror="this.style.display='none'">
+                        </div>
                         
-                        <div class="mb-4 relative z-10 text-right">
+                        <div class="mb-4 relative z-10 text-right w-full">
                             <p class="text-base tracking-tight leading-relaxed">
                                 <span class="italic font-bold">"${art.title}"</span>
                                 ${art.isUnique ? `
@@ -332,7 +335,7 @@
                                 <span class="text-[10px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
                             </p>
                         </div>
-                        <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10 border-t border-gray-100">
+                        <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10 border-t border-gray-100 w-full">
                              <p class="font-bold">${artistVal}</p>
                              <p>PÁGINA ${i + 1}</p>
                         </div>
@@ -378,7 +381,6 @@
                 doc.setFont("times", "normal");
                 doc.setFontSize(pdfTitleSize);
                 const spacedTitle = artistVal.toUpperCase().split('').join('  ');
-                // Ajuste automático de posición si el tamaño es muy grande
                 doc.text(spacedTitle, pageWidth / 2, anchorY, { align: "center", maxWidth: 170 });
                 
                 doc.setFontSize(10);
@@ -412,16 +414,16 @@
 
                     doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
 
+                    // Logo centrado en el pie de página
                     if (logoData) {
                         doc.saveGraphicsState();
                         doc.setGState(new doc.GState({ opacity: 0.04 }));
-                        doc.addImage(logoData, 'PNG', pageWidth - margin - 50, 230, 60, 60);
+                        const footerLogoSize = 50;
+                        doc.addImage(logoData, 'PNG', (pageWidth - footerLogoSize) / 2, 230, footerLogoSize, footerLogoSize);
                         doc.restoreGraphicsState();
                     }
 
                     const infoY = 250;
-                    // NO HAY LINEA NEGRA (eliminada según solicitud)
-                    
                     doc.setTextColor(0);
                     doc.setFont("times", "bolditalic");
                     doc.setFontSize(14);
