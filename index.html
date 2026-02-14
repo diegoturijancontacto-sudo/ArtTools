@@ -292,9 +292,10 @@
             const cover = document.createElement('div');
             cover.className = 'preview-page p-12 flex flex-col items-center justify-between text-center font-serif-pdf';
             cover.innerHTML = `
-                <!-- Logo como fondo central absoluto -->
+                <!-- Logo centrado en Y con el título -->
                 <div class="absolute inset-0 flex items-center justify-center opacity-[0.08] grayscale z-0 overflow-hidden pointer-events-none">
-                     <img src="${LOGO_PATH}" class="w-[85mm] max-w-none" onerror="this.style.display='none'">
+                     <!-- El mt-24 compensa el margen del contenedor de arriba para quedar justo tras él -->
+                     <img src="${LOGO_PATH}" class="w-[85mm] max-w-none transform translate-y-[-55px]" onerror="this.style.display='none'">
                 </div>
 
                 <!-- Bloque superior: Título y Subtítulo -->
@@ -323,11 +324,6 @@
                         <img src="${art.image}" class="max-h-[85%] max-w-full object-contain shadow-xl relative z-10">
                     </div>
                     <div class="relative pt-8 flex flex-col items-center">
-                        <!-- Marca de agua reducida un 50% -->
-                        <div class="w-full flex justify-center mb-4 opacity-[0.05] grayscale pointer-events-none">
-                             <img src="${LOGO_PATH}" class="w-20" onerror="this.style.display='none'">
-                        </div>
-                        
                         <div class="mb-4 relative z-10 text-right w-full">
                             <p class="text-base tracking-tight leading-relaxed">
                                 <span class="italic">"${art.title}"</span>
@@ -345,6 +341,8 @@
                         </div>
                         <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10 border-t border-gray-100 w-full">
                              <p class="font-bold">${artistVal}</p>
+                             <!-- Marca de agua de pie alineada al nivel de los textos -->
+                             <img src="${LOGO_PATH}" class="w-8 opacity-[0.1] grayscale absolute left-1/2 transform -translate-x-1/2" onerror="this.style.display='none'">
                              <p>PÁGINA ${i + 1}</p>
                         </div>
                     </div>
@@ -376,15 +374,17 @@
                 } catch (e) {}
 
                 // --- PORTADA ---
+                const titleY = 85;
+
                 if (logoData) {
                     doc.saveGraphicsState();
                     doc.setGState(new doc.GState({ opacity: 0.08 }));
                     const logoSize = 85; 
-                    doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, (pageHeight - logoSize) / 2, logoSize, logoSize);
+                    // Centrado exactamente en el eje Y del título (ajustado offset de renderizado de texto)
+                    doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, titleY - (logoSize/2) - 2, logoSize, logoSize);
                     doc.restoreGraphicsState();
                 }
 
-                const titleY = 85;
                 doc.setTextColor(0);
                 doc.setFont("times", "normal");
                 doc.setFontSize(pdfTitleSize);
@@ -425,12 +425,12 @@
 
                     doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
 
-                    // Logo pie de página reducido 50% (25mm)
+                    // Logo pie de página alineado horizontalmente con los textos finales
                     if (logoData) {
                         doc.saveGraphicsState();
-                        doc.setGState(new doc.GState({ opacity: 0.04 }));
-                        const footerLogoSize = 25;
-                        doc.addImage(logoData, 'PNG', (pageWidth - footerLogoSize) / 2, 235, footerLogoSize, footerLogoSize);
+                        doc.setGState(new doc.GState({ opacity: 0.08 }));
+                        const footerLogoSize = 12; // Muy pequeño para alinear con texto
+                        doc.addImage(logoData, 'PNG', (pageWidth - footerLogoSize) / 2, pageHeight - 16, footerLogoSize, footerLogoSize);
                         doc.restoreGraphicsState();
                     }
 
