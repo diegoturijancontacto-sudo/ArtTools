@@ -292,13 +292,16 @@
         // --- RENDER VISTA PREVIA ---
         function updatePreview() {
             previewContainer.innerHTML = '';
+            
+            // Constante para opacidad de marca de agua (igual que en PDF)
+            const WATERMARK_OPACITY = 0.1;
 
             // Portada
             const cover = document.createElement('div');
             cover.className = 'preview-page p-12 flex flex-col justify-between items-center text-center font-serif-custom';
             cover.style.position = 'relative';
             cover.innerHTML = `
-                <img src="rtbrok_logo.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; opacity: 0.1; z-index: 0;" alt="Watermark">
+                <img src="rtbrok_logo.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; opacity: ${WATERMARK_OPACITY}; z-index: 0;" alt="Watermark" onerror="this.style.display='none'">
                 <div class="mt-20" style="position: relative; z-index: 1;">
                     <h1 class="text-4xl tracking-[0.2em] mb-4 uppercase font-bold">${inputs.artistName.value}</h1>
                     <div class="w-24 h-px bg-black mx-auto my-4"></div>
@@ -363,22 +366,33 @@
                 // --- PORTADA ---
                 
                 // Agregar logo como marca de agua en el fondo
+                const WATERMARK_OPACITY = 0.1;
                 const logoImg = new Image();
                 logoImg.src = 'rtbrok_logo.png';
-                await new Promise(r => logoImg.onload = r);
+                await new Promise((resolve, reject) => {
+                    logoImg.onload = resolve;
+                    logoImg.onerror = () => {
+                        console.warn('Logo watermark could not be loaded, continuing without it');
+                        resolve(); // Continue even if logo fails to load
+                    };
+                });
                 
-                // Centrar el logo y hacerlo grande pero translúcido
-                const logoSize = 80; // Tamaño del logo en mm
-                const logoX = (pageWidth - logoSize) / 2;
-                const logoY = (pageHeight - logoSize) / 2;
-                
-                // Guardar el estado gráfico actual
-                doc.saveGraphicsState();
-                // Establecer opacidad para el efecto de marca de agua
-                doc.setGState(new doc.GState({ opacity: 0.1 }));
-                doc.addImage(logoImg.src, 'PNG', logoX, logoY, logoSize, logoSize);
-                // Restaurar el estado gráfico
-                doc.restoreGraphicsState();
+                // Si el logo se cargó correctamente, agregarlo como marca de agua
+                if (logoImg.complete && logoImg.naturalWidth > 0) {
+                    // Centrar el logo y hacerlo grande pero translúcido
+                    // Nota: 80mm en PDF ≈ 200px en preview (escala similar visualmente)
+                    const logoSize = 80; // Tamaño del logo en mm
+                    const logoX = (pageWidth - logoSize) / 2;
+                    const logoY = (pageHeight - logoSize) / 2;
+                    
+                    // Guardar el estado gráfico actual
+                    doc.saveGraphicsState();
+                    // Establecer opacidad para el efecto de marca de agua
+                    doc.setGState(new doc.GState({ opacity: WATERMARK_OPACITY }));
+                    doc.addImage(logoImg.src, 'PNG', logoX, logoY, logoSize, logoSize);
+                    // Restaurar el estado gráfico
+                    doc.restoreGraphicsState();
+                }
                 
                 doc.setFont("times", "bold");
                 doc.setFontSize(32);
