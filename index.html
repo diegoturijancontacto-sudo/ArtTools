@@ -296,13 +296,15 @@
             // Portada
             const cover = document.createElement('div');
             cover.className = 'preview-page p-12 flex flex-col justify-between items-center text-center font-serif-custom';
+            cover.style.position = 'relative';
             cover.innerHTML = `
-                <div class="mt-20">
+                <img src="rtbrok_logo.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; opacity: 0.1; z-index: 0;" alt="Watermark">
+                <div class="mt-20" style="position: relative; z-index: 1;">
                     <h1 class="text-4xl tracking-[0.2em] mb-4 uppercase font-bold">${inputs.artistName.value}</h1>
                     <div class="w-24 h-px bg-black mx-auto my-4"></div>
                     <h2 class="text-lg tracking-widest uppercase opacity-80">${inputs.subtitle.value}</h2>
                 </div>
-                <div class="mb-10">
+                <div class="mb-10" style="position: relative; z-index: 1;">
                     <p class="text-sm font-bold tracking-widest uppercase border-y border-black py-2 inline-block px-4 mb-4">${inputs.updateText.value}</p>
                     <p class="text-[10px] text-gray-500 font-sans leading-relaxed max-w-xs mx-auto italic">${inputs.legalNote.value}</p>
                 </div>
@@ -359,10 +361,34 @@
                 // "times" para Ibarra Real Nova y "helvetica" para Roboto
 
                 // --- PORTADA ---
+                
+                // Agregar logo como marca de agua en el fondo
+                const logoImg = new Image();
+                logoImg.src = 'rtbrok_logo.png';
+                await new Promise(r => logoImg.onload = r);
+                
+                // Centrar el logo y hacerlo grande pero translúcido
+                const logoSize = 80; // Tamaño del logo en mm
+                const logoX = (pageWidth - logoSize) / 2;
+                const logoY = (pageHeight - logoSize) / 2;
+                
+                // Guardar el estado gráfico actual
+                doc.saveGraphicsState();
+                // Establecer opacidad para el efecto de marca de agua
+                doc.setGState(new doc.GState({ opacity: 0.1 }));
+                doc.addImage(logoImg.src, 'PNG', logoX, logoY, logoSize, logoSize);
+                // Restaurar el estado gráfico
+                doc.restoreGraphicsState();
+                
                 doc.setFont("times", "bold");
                 doc.setFontSize(32);
                 doc.setTextColor(0, 0, 0);
-                doc.text(inputs.artistName.value.toUpperCase(), pageWidth / 2, 100, { align: "center", charSpace: 2 });
+                // Usar maxWidth en lugar de charSpace para mejor control del centrado
+                const artistNameWidth = pageWidth - 60;
+                doc.text(inputs.artistName.value.toUpperCase(), pageWidth / 2, 100, { 
+                    align: "center", 
+                    maxWidth: artistNameWidth 
+                });
 
                 doc.setDrawColor(0);
                 doc.setLineWidth(0.5);
@@ -370,7 +396,10 @@
 
                 doc.setFont("times", "normal");
                 doc.setFontSize(14);
-                doc.text(inputs.subtitle.value.toUpperCase(), pageWidth / 2, 125, { align: "center", charSpace: 1.5 });
+                doc.text(inputs.subtitle.value.toUpperCase(), pageWidth / 2, 125, { 
+                    align: "center", 
+                    maxWidth: pageWidth - 60 
+                });
 
                 // Fecha y Legal (Todo en NEGRO)
                 doc.setFont("helvetica", "bold");
