@@ -8,15 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Ibarra+Real+Nova:ital,wght@0,400..700;1,400..700&family=Roboto:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
 
         body {
             background-color: #f3f4f6;
             font-family: 'Roboto', sans-serif;
         }
 
-        .font-serif-custom {
-            font-family: 'Ibarra Real Nova', serif;
+        /* Forzamos fuentes que jsPDF maneja de forma nativa para máxima consistencia */
+        .font-serif-pdf {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        
+        .font-sans-pdf {
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         .preview-page {
@@ -31,21 +36,10 @@
             margin-bottom: 2rem;
             color: black;
         }
-        
+
         .loading-overlay {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(5px);
-        }
-
-        .watermark-bg {
-            position: absolute;
-            right: 2rem;
-            bottom: 3.5rem;
-            width: 120px;
-            opacity: 0.1;
-            filter: grayscale(1);
-            pointer-events: none;
-            z-index: 0;
         }
 
         @media (max-width: 768px) {
@@ -59,6 +53,7 @@
                 z-index: 50;
                 border-top: 1px solid #e5e7eb;
             }
+
             .content-padding-bottom {
                 padding-bottom: 100px;
             }
@@ -79,36 +74,36 @@
 
     <!-- SECCIÓN IZQUIERDA: EDITOR -->
     <aside id="editorPanel" class="w-full md:w-1/3 lg:w-1/4 bg-white md:border-r border-gray-200 flex flex-col md:h-full z-10 shrink-0">
-        
+
         <div class="hidden md:block p-5 bg-slate-900 text-white shadow-md shrink-0">
-            <h1 class="text-xl font-bold font-serif-custom"><i class="fas fa-palette mr-2"></i>Catálogo Pro</h1>
+            <h1 class="text-xl font-bold font-serif-pdf"><i class="fas fa-palette mr-2"></i>Catálogo Pro</h1>
         </div>
 
         <div class="flex-1 p-5 space-y-6 overflow-y-auto content-padding-bottom">
-            
+
             <!-- 1. PORTADA -->
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center">
                     <span class="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs mr-2">1</span>
-                    Configuración Portada
+                    Portada
                 </h2>
-                
+
                 <div class="space-y-3">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">Nombre / Artista</label>
-                        <input type="text" id="artistName" value="" placeholder="Dejar vacío para 'CATÁLOGO'" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Título / Artista</label>
+                        <input type="text" id="artistName" value="" placeholder="CATÁLOGO" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Subtítulo</label>
-                        <input type="text" id="catalogSubtitle" value="OBRA GENERAL" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-custom focus:border-slate-500 outline-none">
+                        <input type="text" id="catalogSubtitle" value="OBRA GENERAL" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-calendar-alt mr-1"></i> Fecha</label>
-                        <input type="text" id="updateText" value="ACTUALIZACIÓN FEBRERO 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded text-black font-bold focus:ring-1 focus:ring-slate-500 outline-none">
+                        <input type="text" id="updateText" value="ACTUALIZACIÓN FEBRERO 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded font-sans-pdf font-bold focus:ring-1 focus:ring-slate-500 outline-none">
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-file-contract mr-1"></i> Nota Legal</label>
-                        <textarea id="legalNote" rows="2" class="w-full text-[10px] p-2 border-l-4 border-slate-400 bg-white rounded text-gray-700 focus:ring-1 focus:ring-slate-500 outline-none">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
+                        <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-file-contract mr-1"></i> Legal</label>
+                        <textarea id="legalNote" rows="2" class="w-full text-[10px] p-2 border-l-4 border-slate-400 bg-white rounded text-gray-700 font-sans-pdf focus:ring-1 focus:ring-slate-500 outline-none">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
                     </div>
                 </div>
             </div>
@@ -117,35 +112,33 @@
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center">
                     <span class="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs mr-2">2</span>
-                    Cargar Obras
+                    Obras
                 </h2>
-                
+
                 <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 bg-white rounded-lg cursor-pointer hover:bg-slate-100 transition mb-4 group">
                     <div class="flex flex-col items-center justify-center pt-2 pb-2">
-                        <i class="fas fa-images text-2xl text-slate-400 group-hover:text-slate-600 mb-1"></i>
-                        <p class="text-xs text-slate-500 font-bold">Agregar fotos de obras</p>
+                        <i class="fas fa-plus text-xl text-slate-400 group-hover:text-slate-600 mb-1"></i>
+                        <p class="text-xs text-slate-500 font-bold">Añadir Imágenes</p>
                     </div>
                     <input type="file" id="imageInput" class="hidden" multiple accept="image/*">
                 </label>
 
                 <div id="artworkList" class="space-y-3">
-                    <p class="text-xs text-center text-gray-400 italic py-4" id="emptyMsg">No has cargado obras aún.</p>
+                    <p class="text-xs text-center text-gray-400 italic py-4" id="emptyMsg">Vacío.</p>
                 </div>
             </div>
-
-            <div class="h-16 md:hidden"></div>
         </div>
 
         <div class="hidden md:block p-4 bg-white border-t border-gray-200 shrink-0">
             <button onclick="generatePDF()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded transition flex items-center justify-center shadow-lg">
-                <i class="fas fa-file-pdf mr-2"></i> DESCARGAR PDF
+                <i class="fas fa-file-pdf mr-2"></i> EXPORTAR CATÁLOGO
             </button>
         </div>
     </aside>
 
     <!-- SECCIÓN DERECHA: VISTA PREVIA -->
-    <main id="previewPanel" class="hidden md:block w-full md:flex-1 bg-gray-200 md:h-full md:overflow-y-auto p-4 md:p-8 relative z-0">
-        <div class="max-w-[550px] mx-auto content-padding-bottom" id="previewContainer"></div>
+    <main id="previewPanel" class="hidden md:block w-full md:flex-1 bg-gray-300 md:h-full md:overflow-y-auto p-4 md:p-8 relative z-0">
+        <div class="max-w-[500px] mx-auto content-padding-bottom" id="previewContainer"></div>
     </main>
 
     <!-- BOTÓN FLOTANTE MÓVIL -->
@@ -158,15 +151,14 @@
     <!-- Loader -->
     <div id="loader" class="fixed inset-0 loading-overlay hidden z-50 flex items-center justify-center flex-col px-4">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-slate-900 mb-4"></div>
-        <h3 class="text-xl font-serif-custom text-slate-900 font-bold text-center">Generando Archivo...</h3>
+        <h3 class="text-xl font-serif-pdf text-slate-900 font-bold text-center">Exportando PDF...</h3>
     </div>
 
     <script>
         let artworks = [];
         const { jsPDF } = window.jspdf;
-        const LOGO_PATH = 'rtbrok_logo.png'; // Ruta automática solicitada
+        const LOGO_PATH = 'rtbrok_logo.png';
 
-        // Referencias
         const imageInput = document.getElementById('imageInput');
         const artworkList = document.getElementById('artworkList');
         const previewContainer = document.getElementById('previewContainer');
@@ -179,7 +171,6 @@
             legalNote: document.getElementById('legalNote')
         };
 
-        // Event Listeners
         Object.keys(inputs).forEach(key => {
             inputs[key].addEventListener('input', updatePreview);
         });
@@ -191,7 +182,6 @@
             const preview = document.getElementById('previewPanel');
             const tabE = document.getElementById('tabEditor');
             const tabP = document.getElementById('tabPreview');
-
             if (tab === 'editor') {
                 editor.classList.remove('hidden');
                 preview.classList.add('hidden');
@@ -207,17 +197,16 @@
 
         function handleImageUpload(e) {
             const files = Array.from(e.target.files);
-            if(files.length > 0) emptyMsg.style.display = 'none';
-
+            if (files.length > 0) emptyMsg.style.display = 'none';
             files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const artwork = {
                         id: Date.now() + Math.random(),
                         image: event.target.result,
-                        title: "Título de la Obra",
-                        medium: "Óleo sobre tela",
-                        dimensions: "120 x 100 cm",
+                        title: "TÍTULO DE LA OBRA",
+                        medium: "ÓLEO SOBRE TELA",
+                        dimensions: "120 x 100 CM",
                         code: "CAT-" + Math.floor(1000 + Math.random() * 9000)
                     };
                     artworks.push(artwork);
@@ -231,12 +220,11 @@
 
         function renderArtworkList() {
             artworkList.innerHTML = '';
-            if(artworks.length === 0) {
+            if (artworks.length === 0) {
                 artworkList.appendChild(emptyMsg);
                 emptyMsg.style.display = 'block';
                 return;
             }
-
             artworks.forEach((art, index) => {
                 const div = document.createElement('div');
                 div.className = 'bg-white p-3 rounded border border-gray-200 shadow-sm mb-3';
@@ -244,15 +232,15 @@
                     <div class="flex gap-3 mb-2 items-start">
                         <img src="${art.image}" class="w-16 h-16 object-cover rounded border">
                         <div class="flex-1 space-y-2">
-                            <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value)" class="w-full text-xs p-1 border rounded font-bold outline-none">
+                            <input type="text" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value.toUpperCase())" class="w-full text-xs p-1 border rounded font-bold outline-none uppercase font-serif-pdf">
                             <div class="grid grid-cols-2 gap-1">
-                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value)" class="text-[9px] p-1 border rounded outline-none">
-                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value)" class="text-[9px] p-1 border rounded outline-none">
+                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                         <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value)" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-20">
+                         <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value.toUpperCase())" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-20">
                          <div class="flex gap-2">
                              <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-up"></i></button>
                              <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-down"></i></button>
@@ -266,7 +254,7 @@
 
         function updateArtwork(id, field, value) {
             const art = artworks.find(a => a.id == id);
-            if(art) { art[field] = value; updatePreview(); }
+            if (art) { art[field] = value; updatePreview(); }
         }
 
         function deleteArtwork(id) {
@@ -276,63 +264,57 @@
         }
 
         function moveArtwork(index, direction) {
-            if (direction === -1 && index > 0) [artworks[index], artworks[index-1]] = [artworks[index-1], artworks[index]];
-            else if (direction === 1 && index < artworks.length-1) [artworks[index], artworks[index+1]] = [artworks[index+1], artworks[index]];
+            if (direction === -1 && index > 0) [artworks[index], artworks[index - 1]] = [artworks[index - 1], artworks[index]];
+            else if (direction === 1 && index < artworks.length - 1) [artworks[index], artworks[index + 1]] = [artworks[index + 1], artworks[index]];
             renderArtworkList(); updatePreview();
         }
 
         function updatePreview() {
             previewContainer.innerHTML = '';
-            
-            const artistVal = inputs.artistName.value.trim();
-            const mainTitle = artistVal === "" ? "CATÁLOGO" : artistVal.toUpperCase();
+            const artistVal = inputs.artistName.value.trim() || "CATÁLOGO";
+            const subVal = inputs.subtitle.value.trim() || "OBRA GENERAL";
 
-            // --- PORTADA ---
+            // PORTADA CONSISTENTE
             const cover = document.createElement('div');
-            cover.className = 'preview-page p-12 flex flex-col font-serif-custom';
+            cover.className = 'preview-page p-12 flex flex-col items-center justify-center text-center font-serif-pdf';
             cover.innerHTML = `
-                <div class="flex-1"></div>
-                <div class="w-full flex flex-col items-center mb-16">
-                    <div class="text-center mb-12">
-                        <h1 class="text-3xl tracking-[0.4em] mb-1 font-normal">${mainTitle}</h1>
-                        <h2 class="text-[11px] tracking-[0.3em] uppercase opacity-70">${inputs.subtitle.value}</h2>
-                    </div>
-                    <div class="w-full flex flex-col items-center">
-                        <img src="${LOGO_PATH}" class="w-20 mb-8 opacity-20 grayscale" onerror="this.style.display='none'">
-                        <div class="w-full text-center">
-                            <p class="text-[9px] font-sans tracking-[0.25em] uppercase mb-2 font-bold">${inputs.updateText.value}</p>
-                            <p class="text-[8px] text-gray-500 font-sans leading-relaxed max-w-[280px] mx-auto italic">${inputs.legalNote.value}</p>
-                        </div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-10 grayscale z-0 overflow-hidden">
+                     <img src="${LOGO_PATH}" class="w-[300mm] max-w-none transform translate-y-4" onerror="this.style.display='none'">
+                </div>
+                <div class="relative z-10 flex flex-col items-center">
+                    <h1 class="text-4xl tracking-[0.3em] mb-4 font-normal uppercase">${artistVal}</h1>
+                    <h2 class="text-xs tracking-[0.4em] uppercase opacity-60 mb-32">${subVal}</h2>
+                    
+                    <div class="mt-20">
+                        <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase mb-3 font-bold">${inputs.updateText.value}</p>
+                        <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
                     </div>
                 </div>
             `;
             previewContainer.appendChild(cover);
 
-            // --- PÁGINAS DE OBRAS ---
             artworks.forEach((art, i) => {
                 const page = document.createElement('div');
-                page.className = 'preview-page p-12 flex flex-col justify-between font-serif-custom';
+                page.className = 'preview-page p-12 flex flex-col justify-between font-serif-pdf';
                 page.innerHTML = `
-                    <div class="flex-1 flex items-center justify-center py-4">
-                        <img src="${art.image}" class="max-h-[75%] max-w-full object-contain shadow-2xl relative z-10">
+                    <div class="flex-1 flex items-center justify-center py-6">
+                        <img src="${art.image}" class="max-h-[80%] max-w-full object-contain shadow-2xl relative z-10">
                     </div>
                     <div class="relative">
-                        <!-- Marca de agua RTBROK alineada detrás del texto -->
-                        <img src="${LOGO_PATH}" class="watermark-bg" onerror="this.style.display='none'">
-                        
-                        <div class="border-t border-black pt-3 mb-6 relative z-10">
-                            <p class="text-right text-base">
-                                <span class="italic">"${art.title}"</span> 
-                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span> 
-                                <span class="text-[11px] font-sans uppercase tracking-tight">${art.medium}</span>
-                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span>
-                                <span class="text-[11px] font-sans">${art.dimensions}</span>
-                                <span class="text-[10px] font-sans mx-2 opacity-30">|</span>
-                                <span class="text-[9px] font-sans bg-gray-50 px-2 py-0.5 border">${art.code}</span>
+                        <img src="${LOGO_PATH}" class="absolute right-[-20px] bottom-10 w-48 opacity-[0.07] grayscale pointer-events-none z-0" onerror="this.style.display='none'">
+                        <div class="border-t border-black pt-4 mb-4 relative z-10 text-right">
+                            <p class="text-base tracking-tight">
+                                <span class="italic font-bold">"${art.title}"</span>
+                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                <span class="text-[11px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>
+                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                <span class="text-[11px] font-sans-pdf">${art.dimensions}</span>
+                                <span class="text-[10px] font-sans-pdf mx-2 opacity-30">|</span>
+                                <span class="text-[10px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
                             </p>
                         </div>
-                        <div class="flex justify-between items-center pt-2 font-sans text-[8px] text-gray-400 uppercase tracking-widest relative z-10">
-                             <p>${artistVal || 'CATÁLOGO'}</p>
+                        <div class="flex justify-between items-center pt-2 font-sans-pdf text-[9px] text-gray-400 uppercase tracking-widest relative z-10">
+                             <p class="font-bold">${artistVal}</p>
                              <p>PÁGINA ${i + 1}</p>
                         </div>
                     </div>
@@ -344,15 +326,13 @@
         async function generatePDF() {
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
-
             try {
                 const doc = new jsPDF('p', 'mm', 'a4');
                 const pageWidth = 210;
                 const pageHeight = 297;
-                const artistVal = inputs.artistName.value.trim();
-                const mainTitle = artistVal === "" ? "CATÁLOGO" : artistVal.toUpperCase();
+                const artistVal = inputs.artistName.value.trim() || "CATÁLOGO";
+                const subVal = inputs.subtitle.value.trim() || "OBRA GENERAL";
 
-                // Cargar logo para el PDF
                 let logoData = null;
                 try {
                     const response = await fetch(LOGO_PATH);
@@ -362,78 +342,103 @@
                         reader.onload = () => resolve(reader.result);
                         reader.readAsDataURL(blob);
                     });
-                } catch(e) { console.warn("Logo no encontrado para el PDF"); }
+                } catch (e) {}
 
                 // --- PORTADA ---
-                const anchorY = 205; 
-                doc.setFont("times", "normal");
-                doc.setFontSize(26);
-                doc.text(mainTitle, pageWidth / 2, anchorY, { align: "center", charSpace: 2 });
-                doc.setFontSize(9);
-                doc.text(inputs.subtitle.value.toUpperCase(), pageWidth / 2, anchorY + 8, { align: "center", charSpace: 1.5 });
-
                 if (logoData) {
                     doc.saveGraphicsState();
-                    doc.setGState(new doc.GState({ opacity: 0.15 }));
-                    doc.addImage(logoData, 'PNG', (pageWidth - 20)/2, anchorY + 15, 20, 20);
+                    doc.setGState(new doc.GState({ opacity: 0.08 }));
+                    const logoSize = 180;
+                    doc.addImage(logoData, 'PNG', (pageWidth - logoSize) / 2, (pageHeight - logoSize) / 2 + 10, logoSize, logoSize);
                     doc.restoreGraphicsState();
                 }
 
+                const anchorY = 120;
+                doc.setTextColor(0);
+                
+                // Título principal con Tracking manual para igualar la preview
+                doc.setFont("times", "normal");
+                doc.setFontSize(32);
+                const spacedTitle = artistVal.toUpperCase().split('').join('  ');
+                doc.text(spacedTitle, pageWidth / 2, anchorY, { align: "center" });
+                
+                // Subtítulo
+                doc.setFontSize(10);
+                const spacedSub = subVal.toUpperCase().split('').join('   ');
+                doc.text(spacedSub, pageWidth / 2, anchorY + 12, { align: "center" });
+
+                // Footer Portada
                 doc.setFont("helvetica", "bold");
-                doc.setFontSize(8);
-                doc.text(inputs.updateText.value.toUpperCase(), pageWidth / 2, pageHeight - 40, { align: "center", charSpace: 1 });
+                doc.setFontSize(9);
+                const spacedDate = inputs.updateText.value.toUpperCase().split('').join(' ');
+                doc.text(spacedDate, pageWidth / 2, pageHeight - 50, { align: "center" });
+                
                 doc.setFont("helvetica", "italic");
-                doc.setFontSize(7);
+                doc.setFontSize(8);
                 doc.setTextColor(100);
                 const legalLines = doc.splitTextToSize(inputs.legalNote.value, 110);
-                doc.text(legalLines, pageWidth / 2, pageHeight - 33, { align: "center" });
+                doc.text(legalLines, pageWidth / 2, pageHeight - 42, { align: "center" });
 
                 // --- OBRAS ---
                 for (let i = 0; i < artworks.length; i++) {
                     doc.addPage();
                     const art = artworks[i];
                     
+                    const margin = 25;
+                    const maxW = pageWidth - (margin * 2);
+                    const maxH = 180;
+                    
                     const img = new Image();
                     img.src = art.image;
                     await new Promise(r => img.onload = r);
-
-                    const margin = 25;
-                    const maxW = pageWidth - (margin * 2);
-                    const maxH = 175;
+                    
                     let rW = maxW, rH = (img.height * maxW) / img.width;
                     if (rH > maxH) { rH = maxH; rW = (img.width * maxH) / img.height; }
 
+                    // Imagen
                     doc.addImage(art.image, 'JPEG', margin + (maxW - rW) / 2, 45 + (maxH - rH) / 2, rW, rH);
 
-                    // Logo Marca de agua detrás del texto
+                    // Logo esquinado
                     if (logoData) {
                         doc.saveGraphicsState();
-                        doc.setGState(new doc.GState({ opacity: 0.1 }));
-                        doc.addImage(logoData, 'PNG', pageWidth - margin - 35, 235, 30, 30);
+                        doc.setGState(new doc.GState({ opacity: 0.06 }));
+                        doc.addImage(logoData, 'PNG', pageWidth - margin - 50, 230, 60, 60);
                         doc.restoreGraphicsState();
                     }
 
-                    const infoY = 245;
+                    // Información Obra
+                    const infoY = 255;
                     doc.setDrawColor(0);
+                    doc.setLineWidth(0.3);
                     doc.line(margin, infoY, pageWidth - margin, infoY);
+                    
                     doc.setTextColor(0);
-                    doc.setFont("times", "italic");
-                    doc.setFontSize(13);
-                    doc.text(`"${art.title}"`, pageWidth - margin, infoY + 7, { align: "right" });
+                    doc.setFont("times", "bolditalic");
+                    doc.setFontSize(14);
+                    doc.text(`"${art.title}"`, pageWidth - margin, infoY + 8, { align: "right" });
+                    
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(9);
-                    doc.setTextColor(60);
-                    doc.text(`${art.medium}  |  ${art.dimensions}  |  ${art.code}`, pageWidth - margin, infoY + 13, { align: "right" });
+                    doc.setTextColor(80);
+                    const details = `${art.medium}   |   ${art.dimensions}   |   ${art.code}`;
+                    doc.text(details.toUpperCase(), pageWidth - margin, infoY + 16, { align: "right" });
+
+                    // Pie de página
+                    doc.setFontSize(8);
+                    doc.setTextColor(160);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(artistVal.toUpperCase(), margin, pageHeight - 12);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`PÁGINA ${i + 1}`, pageWidth - margin, pageHeight - 12, { align: "right" });
                 }
 
-                doc.save(`CATALOGO_${(artistVal || 'GENERAL').replace(/\s+/g, '_')}.pdf`);
+                doc.save(`CATALOGO_${artistVal.replace(/\s+/g, '_')}.pdf`);
             } catch (e) {
                 console.error(e);
             } finally {
                 loader.classList.add('hidden');
             }
         }
-
         updatePreview();
     </script>
 </body>
