@@ -323,7 +323,7 @@
                     <div class="relative pt-8 flex flex-col items-center">
                         <div class="mb-4 relative z-10 text-right w-full">
                             <p class="text-base tracking-tight leading-relaxed">
-                                <span class="italic font-bold">"${art.title}"</span>
+                                <span class="font-bold">"${art.title}"</span>
                                 ${art.artist ? `<br><span class="text-xs opacity-60 font-sans-pdf uppercase tracking-widest">${art.artist}</span>` : ''}
                                 <div class="mt-1 flex justify-end items-center gap-2">
                                     ${art.isUnique ? `<span class="text-[9px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span> <span class="text-[9px] opacity-30">|</span>` : ''}
@@ -410,7 +410,7 @@
                     }
 
                     doc.setTextColor(0);
-                    doc.setFont("times", "italic");
+                    doc.setFont("times", "normal"); // Cambiado de 'italic' a 'normal'
                     doc.setFontSize(14);
                     doc.text(`"${art.title}"`, pageWidth - margin, 258, { align: "right" });
                     
@@ -422,15 +422,13 @@
                     info.push(art.medium); info.push(art.dimensions); info.push(art.code);
                     doc.text(info.join('   |   ').toUpperCase(), pageWidth - margin, 266, { align: "right" });
 
-                    // PIE DE PÁGINA REDUCIDO (Se aplicó reducción de ~4pts respecto al estándar anterior de 9-10px)
-                    doc.setFontSize(5.5); // Tamaño muy pequeño y elegante
+                    // PIE DE PÁGINA REDUCIDO
+                    doc.setFontSize(5.5);
                     doc.setTextColor(180);
                     doc.setFont("helvetica", "normal");
                     
-                    // Izquierda: Texto legal de disponibilidad
                     doc.text(AVAILABILITY_TEXT, margin, pageHeight - 12);
                     
-                    // Derecha: Autor + Fecha + Página
                     const footerString = `${currentArtist.toUpperCase()}  •  ${dateVal.toUpperCase()}  •  PÁGINA ${i + 1}`;
                     doc.text(footerString, pageWidth - margin, pageHeight - 12, { align: "right" });
                 }
