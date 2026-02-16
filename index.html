@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generador de Catálogo de Arte - Estilo RTBROK</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -249,7 +251,13 @@
         <h3 class="text-xl font-serif-pdf text-slate-900 font-bold text-center">Exportando PDF...</h3>
     </div>
 
-    <script>let artworks = [];
+    <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("Service Worker registrado"));
+}
+        
+        let artworks = [];
         let fullPageImage = null; // Imagen de hoja completa
         const { jsPDF } = window.jspdf;
         const LOGO_PATH = 'rtbrok_logo.png';
