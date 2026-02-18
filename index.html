@@ -2,202 +2,831 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Proyectos Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generador de Catálogo de Arte - Estilo RTBROK</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .font-serif-pdf {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        
+        .font-sans-pdf {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .preview-page {
+            background: white;
+            width: 100%;
+            aspect-ratio: 210/297;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2rem;
+            color: black;
+        }
+
+        .loading-overlay {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px);
+        }
+
+        .section-card {
+            transition: all 0.3s ease;
+        }
+        
+        .section-card.moving {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                z-index: 50;
+                border-top: 1px solid #e5e7eb;
+            }
+            .content-padding-bottom {
+                padding-bottom: 100px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+<body class="min-h-screen flex flex-col md:flex-row md:h-screen md:overflow-hidden bg-gray-100">
 
-    <!-- Loading Overlay -->
-    <div id="loading" class="fixed inset-0 bg-white/80 z-50 flex items-center justify-center hidden">
-        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+    <!-- NAVEGACIÓN MÓVIL -->
+    <div class="md:hidden bg-slate-900 text-white p-2 sticky top-0 z-40 shadow-md flex justify-around items-center">
+        <button onclick="switchTab('editor')" id="tabEditor" class="flex-1 py-2 text-center font-bold border-b-2 border-white">
+            <i class="fas fa-edit mr-2"></i>Editar
+        </button>
+        <button onclick="switchTab('preview')" id="tabPreview" class="flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent">
+            <i class="fas fa-eye mr-2"></i>Vista Previa
+        </button>
     </div>
 
-    <div class="max-w-7xl mx-auto p-4 md:p-6">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Proyectos</h1>
-                <p class="text-slate-500">Gestión de tareas y cronograma dinámico</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition-all flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                    Nuevo Proyecto
-                </button>
-                <button onclick="refreshData()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all">
-                    Actualizar
-                </button>
-            </div>
-        </header>
-
-        <!-- Navegación de Vistas -->
-        <nav class="flex gap-1 bg-slate-200/50 p-1 rounded-xl mb-6 w-fit">
-            <button onclick="switchView('board')" id="btn-board" class="view-btn px-6 py-2 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-sm">Tablero</button>
-            <button onclick="switchView('list')" id="btn-list" class="view-btn px-6 py-2 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900">Lista</button>
-            <button onclick="switchView('gantt')" id="btn-gantt" class="view-btn px-6 py-2 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900">Gantt</button>
-        </nav>
-
-        <!-- VISTAS -->
-        <!-- 1. TABLERO KANBAN -->
-        <div id="view-board" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Columna: En Curso -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 px-2">
-                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                    <h3 class="font-bold text-slate-700 uppercase text-sm tracking-wider">En Curso</h3>
-                    <span id="count-curso" class="ml-auto bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
-                </div>
-                <div id="curso" class="kanban-column bg-slate-100/50 p-3 rounded-2xl min-h-[500px] border-2 border-transparent transition-colors" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
-            </div>
-            <!-- Columna: Pausa -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 px-2">
-                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                    <h3 class="font-bold text-slate-700 uppercase text-sm tracking-wider">Pausa</h3>
-                    <span id="count-pausa" class="ml-auto bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
-                </div>
-                <div id="pausa" class="kanban-column bg-slate-100/50 p-3 rounded-2xl min-h-[500px] border-2 border-transparent transition-colors" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
-            </div>
-            <!-- Columna: Terminado -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 px-2">
-                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                    <h3 class="font-bold text-slate-700 uppercase text-sm tracking-wider">Terminado</h3>
-                    <span id="count-terminado" class="ml-auto bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
-                </div>
-                <div id="terminado" class="kanban-column bg-slate-100/50 p-3 rounded-2xl min-h-[500px] border-2 border-transparent transition-colors" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
-            </div>
+    <!-- SECCIÓN IZQUIERDA: EDITOR -->
+    <aside id="editorPanel" class="w-full md:w-1/3 lg:w-1/4 bg-white md:border-r border-gray-200 flex flex-col md:h-full z-10 shrink-0">
+        <div class="hidden md:block p-5 bg-slate-900 text-white shadow-md shrink-0">
+            <h1 class="text-xl font-bold font-serif-pdf"><i class="fas fa-palette mr-2"></i>Catálogo Pro</h1>
         </div>
 
-        <!-- 2. VISTA DE LISTA -->
-        <div id="view-list" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                        <th class="p-4 font-semibold text-slate-600">Nombre del Proyecto</th>
-                        <th class="p-4 font-semibold text-slate-600 text-center">Responsable</th>
-                        <th class="p-4 font-semibold text-slate-600 text-center">Días en Curso</th>
-                        <th class="p-4 font-semibold text-slate-600 text-center">Estado</th>
-                        <th class="p-4 font-semibold text-slate-600 text-right">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="list-content"></tbody>
-            </table>
-        </div>
-
-        <!-- 3. VISTA GANTT DINÁMICO -->
-        <div id="view-gantt" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-[600px]">
-            <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-shrink-0">
-                <h2 class="font-bold text-slate-700">Cronograma Dinámico</h2>
-                <div class="flex gap-2 items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">Zoom</span>
-                    <button onclick="changeZoom('out')" class="px-3 py-1 bg-white border border-slate-300 rounded-md hover:bg-slate-50 text-xs font-bold shadow-sm">- MES</button>
-                    <button onclick="changeZoom('in')" class="px-3 py-1 bg-white border border-slate-300 rounded-md hover:bg-slate-50 text-xs font-bold shadow-sm">+ DÍA</button>
-                </div>
+        <div class="flex-1 p-5 overflow-y-auto content-padding-bottom" id="sectionsScrollContainer">
+            
+            <!-- PANEL DE GESTIÓN DE ARCHIVOS -->
+            <div class="grid grid-cols-2 gap-2 mb-6 p-3 bg-slate-100 rounded-lg border border-slate-200">
+                <button onclick="saveProject()" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold py-2 px-2 rounded flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Guardar Proyecto
+                </button>
+                <label class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold py-2 px-2 rounded flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fas fa-folder-open"></i> Cargar Archivo
+                    <input type="file" id="loadProjectInput" class="hidden" accept=".json">
+                </label>
             </div>
 
-            <div class="flex flex-1 overflow-hidden relative">
-                <!-- Proyectos Fijos (Izquierda) -->
-                <div class="w-64 flex-shrink-0 border-r border-slate-200 bg-white z-20 overflow-hidden flex flex-col shadow-[10px_0_15px_-3px_rgba(0,0,0,0.02)]">
-                    <div class="h-10 bg-slate-100 border-b border-slate-200 font-bold text-[10px] text-slate-500 uppercase flex items-center px-4 flex-shrink-0 tracking-widest">Proyecto</div>
-                    <div id="gantt-project-list" class="overflow-y-hidden flex-1"></div>
+            <p class="text-[10px] text-gray-400 uppercase font-bold mb-4 tracking-widest text-center">Orden de Secciones (Usa las flechas)</p>
+            
+            <div id="sectionsContainer" class="space-y-6">
+                <!-- SECCIONES DINÁMICAS -->
+                
+                <!-- 1. IMAGEN COMPLETA (Nueva Sección Separada) -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm section-card" id="sec-fullimg" data-type="fullimg">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center bg-slate-100 p-2 rounded">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs mr-2"><i class="fas fa-image"></i></span>
+                        <span class="flex-1 text-[10px] sm:text-xs">Imagen Completa / Separador</span>
+                        <div class="flex gap-1 ml-2">
+                            <button onclick="moveSection(this, -1)" class="p-1 hover:text-blue-600 text-gray-400" title="Subir"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="moveSection(this, 1)" class="p-1 hover:text-blue-600 text-gray-400" title="Bajar"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </h2>
+                    <div class="space-y-3">
+                        <p class="text-[10px] text-gray-500 italic">Esta imagen ocupará toda la hoja (Portada Visual).</p>
+                        <div class="flex items-center gap-2">
+                            <label class="flex-1 cursor-pointer bg-white border border-gray-300 hover:border-slate-500 rounded p-2 text-center text-xs transition h-24 flex flex-col items-center justify-center">
+                                <i class="fas fa-file-image text-2xl text-slate-300 mb-2"></i> 
+                                <span id="fullImgLabel">Seleccionar Imagen</span>
+                                <input type="file" id="fullImageInput" class="hidden" accept="image/*">
+                            </label>
+                            <button onclick="removeFullImage()" id="removeFullImgBtn" class="hidden text-red-500 p-2 hover:bg-red-50 rounded h-24 border border-transparent hover:border-red-200"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Gráfico (Derecha - Scrollable) -->
-                <div class="flex-1 overflow-auto relative" id="gantt-scroll-area">
-                    <div id="gantt-timeline-container" class="relative min-w-full h-full">
-                        <div id="gantt-header" class="h-10 bg-slate-50 border-b border-slate-200 flex sticky top-0 z-10 w-max font-medium"></div>
-                        <div id="gantt-bars-area" class="relative w-max"></div>
-                        <div id="gantt-grid-lines" class="absolute inset-0 pointer-events-none z-0 flex w-max"></div>
+                <!-- 2. PORTADA TEXTO -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm section-card" id="sec-cover" data-type="cover">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center bg-slate-100 p-2 rounded">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs mr-2"><i class="fas fa-font"></i></span>
+                        <span class="flex-1 text-[10px] sm:text-xs">Portada (Texto)</span>
+                        <div class="flex gap-1 ml-2">
+                            <button onclick="moveSection(this, -1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="moveSection(this, 1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-down"></i></button>
+                            <button onclick="toggleContent('coverParams')" class="p-1 hover:text-slate-600 text-gray-400"><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                    </h2>
+                    <div id="coverParams" class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Título Principal</label>
+                            <input type="text" id="artistName" value="" placeholder="CATÁLOGO" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase flex justify-between">
+                                Tamaño Título 
+                                <span id="titleSizeValue" class="text-slate-900 font-bold">32px</span>
+                            </label>
+                            <input type="range" id="titleSize" min="20" max="80" value="32" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-slate-900">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Subtítulo</label>
+                            <input type="text" id="catalogSubtitle" value="OBRA GENERAL" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-calendar-alt mr-1"></i> Fecha Global</label>
+                            <input type="text" id="updateText" value="ACTUALIZACIÓN FEBRERO 2026" class="w-full text-sm p-2 border-l-4 border-slate-800 bg-white rounded font-sans-pdf focus:ring-1 focus:ring-slate-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 uppercase flex items-center"><i class="fas fa-file-contract mr-1"></i> Legal Portada</label>
+                            <textarea id="legalNote" rows="2" class="w-full text-[10px] p-2 border-l-4 border-slate-400 bg-white rounded text-gray-700 font-sans-pdf focus:ring-1 focus:ring-slate-500 outline-none">El traslado de la obra requiere una logística de hasta 4 días hábiles, esperamos pueda considerarlo.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. INTRODUCCIÓN -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm section-card" id="sec-intro" data-type="intro">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center bg-slate-100 p-2 rounded">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs mr-2"><i class="fas fa-align-left"></i></span>
+                        <span class="flex-1 text-[10px] sm:text-xs">Introducción</span>
+                        <div class="flex gap-1 ml-2">
+                            <button onclick="moveSection(this, -1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="moveSection(this, 1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-down"></i></button>
+                            <button onclick="toggleContent('introParams')" class="p-1 hover:text-slate-600 text-gray-400"><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                    </h2>
+                    <div id="introParams" class="space-y-3 hidden">
+                        <p class="text-[10px] text-gray-500 italic">Deja en blanco para no incluir esta página.</p>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Título Sección</label>
+                            <input type="text" id="introTitle" value="INTRODUCCIÓN" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Texto Contenido</label>
+                            <textarea id="introText" rows="6" class="w-full text-xs p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none" placeholder="Escribe aquí el texto introductorio..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. CURRICULUM -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm section-card" id="sec-cv" data-type="cv">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center bg-slate-100 p-2 rounded">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs mr-2"><i class="fas fa-user-tie"></i></span>
+                        <span class="flex-1 text-[10px] sm:text-xs">Semblanza / CV</span>
+                        <div class="flex gap-1 ml-2">
+                            <button onclick="moveSection(this, -1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="moveSection(this, 1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-down"></i></button>
+                            <button onclick="toggleContent('cvParams')" class="p-1 hover:text-slate-600 text-gray-400"><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                    </h2>
+                    <div id="cvParams" class="space-y-3 hidden">
+                        <p class="text-[10px] text-gray-500 italic">Deja en blanco para no incluir esta página.</p>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Título Sección</label>
+                            <input type="text" id="cvTitle" value="SEMBLANZA" class="w-full text-sm p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Texto Contenido</label>
+                            <textarea id="cvText" rows="6" class="w-full text-xs p-2 border border-gray-300 rounded font-serif-pdf focus:border-slate-500 outline-none" placeholder="Estudios, exposiciones, premios..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. OBRAS -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm section-card" id="sec-works" data-type="works">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase mb-3 border-b pb-1 flex items-center bg-slate-100 p-2 rounded">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs mr-2"><i class="fas fa-images"></i></span>
+                        <span class="flex-1 text-[10px] sm:text-xs">Galería de Obras</span>
+                        <div class="flex gap-1 ml-2">
+                            <button onclick="moveSection(this, -1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="moveSection(this, 1)" class="p-1 hover:text-blue-600 text-gray-400"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </h2>
+                    <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 bg-white rounded-lg cursor-pointer hover:bg-slate-100 transition mb-4 group">
+                        <div class="flex flex-col items-center justify-center pt-2 pb-2">
+                            <i class="fas fa-plus text-xl text-slate-400 group-hover:text-slate-600 mb-1"></i>
+                            <p class="text-xs text-slate-500 font-bold">Añadir Imágenes</p>
+                        </div>
+                        <input type="file" id="imageInput" class="hidden" multiple accept="image/*">
+                    </label>
+                    <div id="artworkList" class="space-y-3">
+                        <p class="text-xs text-center text-gray-400 italic py-4" id="emptyMsg">Vacío.</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div class="hidden md:block p-4 bg-white border-t border-gray-200 shrink-0">
+            <button onclick="generatePDF()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-4 rounded transition flex items-center justify-center shadow-lg">
+                <i class="fas fa-file-pdf mr-2"></i> EXPORTAR CATÁLOGO
+            </button>
+        </div>
+    </aside>
+
+    <!-- SECCIÓN DERECHA: VISTA PREVIA -->
+    <main id="previewPanel" class="hidden md:block w-full md:flex-1 bg-gray-300 md:h-full md:overflow-y-auto p-4 md:p-8 relative z-0">
+        <div class="max-w-[500px] mx-auto content-padding-bottom" id="previewContainer"></div>
+    </main>
+
+    <!-- BOTÓN FLOTANTE MÓVIL -->
+    <div class="mobile-fab-container md:hidden">
+        <button onclick="generatePDF()" id="mobileGenerateBtn" class="w-full bg-slate-900 active:bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center text-lg">
+            <i class="fas fa-file-download mr-2"></i> DESCARGAR PDF
+        </button>
     </div>
 
-    <!-- MODAL DE PROYECTO -->
-    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 id="modal-title" class="text-xl font-bold text-slate-800">Nuevo Proyecto</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            </div>
-            <form id="project-form" class="p-6 space-y-4" onsubmit="saveProject(event)">
-                <input type="hidden" id="projId">
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Nombre del Proyecto</label>
-                    <input type="text" id="projName" required class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all" placeholder="Ej: Rediseño Web">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Responsable</label>
-                    <input type="text" id="projOwner" required class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all" placeholder="Nombre de persona">
-                </div>
-                <div id="days-field-container">
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Días Estimados</label>
-                    <input type="number" id="projDays" min="1" value="7" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all" placeholder="Ej: 7">
-                    <p class="text-xs text-slate-400 mt-1">Fecha inicio: hoy automáticamente</p>
-                </div>
-                <div id="date-fields-container" class="hidden">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Fecha Inicio</label>
-                            <input type="date" id="projStart" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Fecha Fin</label>
-                            <input type="date" id="projEnd" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 loading-overlay hidden z-50 flex items-center justify-center flex-col px-4">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-slate-900 mb-4"></div>
+        <h3 class="text-xl font-serif-pdf text-slate-900 font-bold text-center">Exportando PDF...</h3>
+    </div>
+
+    <script>
+        let artworks = [];
+        let fullPageImage = null; // Imagen de hoja completa
+        const { jsPDF } = window.jspdf;
+        const LOGO_PATH = 'rtbrok_logo.png';
+        const AVAILABILITY_TEXT = "@ | TODA LA OBRA SE ENCUENTRA DISPONIBLE A RESERVA DE CONFIRMACIÓN";
+
+        const imageInput = document.getElementById('imageInput');
+        const fullImageInput = document.getElementById('fullImageInput');
+        const loadProjectInput = document.getElementById('loadProjectInput');
+        const artworkList = document.getElementById('artworkList');
+        const previewContainer = document.getElementById('previewContainer');
+        const emptyMsg = document.getElementById('emptyMsg');
+
+        // Inputs mapeados
+        const inputs = {
+            artistName: document.getElementById('artistName'),
+            titleSize: document.getElementById('titleSize'),
+            subtitle: document.getElementById('catalogSubtitle'),
+            updateText: document.getElementById('updateText'),
+            legalNote: document.getElementById('legalNote'),
+            introTitle: document.getElementById('introTitle'),
+            introText: document.getElementById('introText'),
+            cvTitle: document.getElementById('cvTitle'),
+            cvText: document.getElementById('cvText')
+        };
+
+        // Listeners
+        Object.keys(inputs).forEach(key => {
+            inputs[key].addEventListener('input', () => {
+                if (key === 'titleSize') {
+                    document.getElementById('titleSizeValue').innerText = inputs[key].value + 'px';
+                }
+                updatePreview();
+            });
+        });
+
+        imageInput.addEventListener('change', handleImageUpload);
+        fullImageInput.addEventListener('change', handleFullImageUpload);
+        loadProjectInput.addEventListener('change', loadProject);
+
+        // --- FUNCIONES DE GUARDADO Y CARGA ---
+        function saveProject() {
+            const projectData = {
+                version: "1.0",
+                timestamp: new Date().toISOString(),
+                data: {
+                    inputs: {},
+                    artworks: artworks,
+                    fullPageImage: fullPageImage,
+                    sectionOrder: getSectionOrder()
+                }
+            };
+            
+            // Guardar valores de inputs
+            Object.keys(inputs).forEach(key => {
+                projectData.data.inputs[key] = inputs[key].value;
+            });
+
+            // Crear y descargar archivo
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData));
+            const downloadAnchorNode = document.createElement('a');
+            const fileName = `PROYECTO_${inputs.artistName.value.trim().replace(/\s+/g, '_') || 'CATALOGO'}.json`;
+            
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function loadProject(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const project = JSON.parse(event.target.result);
+                    if (!project.data) throw new Error("Formato inválido");
+                    
+                    const data = project.data;
+
+                    // 1. Restaurar Inputs
+                    if (data.inputs) {
+                        Object.keys(data.inputs).forEach(key => {
+                            if (inputs[key]) inputs[key].value = data.inputs[key];
+                        });
+                        // Actualizar display de slider
+                        if (inputs.titleSize) document.getElementById('titleSizeValue').innerText = inputs.titleSize.value + 'px';
+                    }
+
+                    // 2. Restaurar Obras
+                    if (data.artworks) {
+                        artworks = data.artworks;
+                        renderArtworkList();
+                    }
+
+                    // 3. Restaurar Imagen Completa
+                    if (data.fullPageImage) {
+                        fullPageImage = data.fullPageImage;
+                        document.getElementById('removeFullImgBtn').classList.remove('hidden');
+                        document.getElementById('fullImgLabel').innerText = "Imagen Cargada";
+                    } else {
+                        removeFullImage();
+                    }
+
+                    // 4. Restaurar Orden de Secciones
+                    if (data.sectionOrder) {
+                        const container = document.getElementById('sectionsContainer');
+                        data.sectionOrder.forEach(type => {
+                            const section = container.querySelector(`.section-card[data-type="${type}"]`);
+                            if (section) container.appendChild(section);
+                        });
+                    }
+
+                    updatePreview();
+                    alert("Proyecto cargado correctamente.");
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Error al cargar el archivo. Asegúrate de que es un archivo .json válido generado por esta herramienta.");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Resetear input
+        }
+
+        // --- FUNCIONES UI ---
+        function toggleContent(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        function switchTab(tab) {
+            const editor = document.getElementById('editorPanel');
+            const preview = document.getElementById('previewPanel');
+            const tabE = document.getElementById('tabEditor');
+            const tabP = document.getElementById('tabPreview');
+            if (tab === 'editor') {
+                editor.classList.remove('hidden');
+                preview.classList.add('hidden');
+                tabE.className = "flex-1 py-2 text-center font-bold border-b-2 border-white";
+                tabP.className = "flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent";
+            } else {
+                editor.classList.add('hidden');
+                preview.classList.remove('hidden');
+                tabP.className = "flex-1 py-2 text-center font-bold border-b-2 border-white";
+                tabE.className = "flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent";
+            }
+        }
+
+        // --- REORDENAMIENTO ---
+        function moveSection(btn, direction) {
+            const section = btn.closest('.section-card');
+            const container = document.getElementById('sectionsContainer');
+            
+            if (direction === -1) { // Subir
+                if (section.previousElementSibling) {
+                    container.insertBefore(section, section.previousElementSibling);
+                }
+            } else { // Bajar
+                if (section.nextElementSibling) {
+                    container.insertBefore(section.nextElementSibling, section);
+                }
+            }
+            updatePreview();
+        }
+
+        function getSectionOrder() {
+            const container = document.getElementById('sectionsContainer');
+            const sections = container.querySelectorAll('.section-card');
+            return Array.from(sections).map(sec => sec.getAttribute('data-type'));
+        }
+
+        // --- MANEJO DE IMÁGENES ---
+        function handleFullImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    fullPageImage = event.target.result;
+                    document.getElementById('removeFullImgBtn').classList.remove('hidden');
+                    document.getElementById('fullImgLabel').innerText = "Imagen Cargada";
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeFullImage() {
+            fullPageImage = null;
+            fullImageInput.value = '';
+            document.getElementById('removeFullImgBtn').classList.add('hidden');
+            document.getElementById('fullImgLabel').innerText = "Seleccionar Imagen";
+            updatePreview();
+        }
+
+        function handleImageUpload(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) emptyMsg.style.display = 'none';
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const artwork = {
+                        id: Date.now() + Math.random(),
+                        image: event.target.result,
+                        title: "TÍTULO DE LA OBRA",
+                        artist: "", 
+                        medium: "ÓLEO SOBRE TELA",
+                        dimensions: "120 x 100 CM",
+                        code: "CAT-" + Math.floor(1000 + Math.random() * 9000),
+                        isUnique: false
+                    };
+                    artworks.push(artwork);
+                    renderArtworkList();
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            });
+            e.target.value = '';
+        }
+
+        function renderArtworkList() {
+            artworkList.innerHTML = '';
+            if (artworks.length === 0) {
+                artworkList.appendChild(emptyMsg);
+                emptyMsg.style.display = 'block';
+                return;
+            }
+            artworks.forEach((art, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 rounded border border-gray-200 shadow-sm mb-3';
+                div.innerHTML = `
+                    <div class="flex gap-3 mb-2 items-start">
+                        <img src="${art.image}" class="w-16 h-16 object-cover rounded border">
+                        <div class="flex-1 space-y-2">
+                            <input type="text" placeholder="TÍTULO" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value.toUpperCase())" class="w-full text-xs p-1 border rounded font-bold outline-none uppercase font-serif-pdf">
+                            <input type="text" placeholder="ARTISTA" value="${art.artist}" oninput="updateArtwork('${art.id}', 'artist', this.value.toUpperCase())" class="w-full text-[10px] p-1 border rounded outline-none uppercase italic text-blue-600 bg-blue-50">
+                            <div class="grid grid-cols-2 gap-1">
+                                <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                                <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Estado</label>
-                    <select id="projStatus" onchange="handleStatusChange()" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all bg-white">
-                        <option value="curso">En Curso</option>
-                        <option value="pausa">Pausa</option>
-                        <option value="terminado">Terminado</option>
-                    </select>
-                </div>
-                <!-- Después del campo de estado, antes de los botones -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Notas del Proyecto</label>
-                    <textarea id="projNotes" rows="3" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none" placeholder="Añade notas, comentarios o detalles importantes..."></textarea>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700">Guardar</button>
-                </div>
-                <button type="button" id="btn-delete-modal" onclick="deleteCurrentProject()" class="w-full mt-2 text-red-500 text-sm font-medium hover:underline hidden">Eliminar Proyecto</button>
-            </form>
-        </div>
-    </div>
+                    <div class="flex justify-between items-center text-xs">
+                         <div class="flex items-center gap-2">
+                            <input type="text" value="${art.code}" oninput="updateArtwork('${art.id}', 'code', this.value.toUpperCase())" class="text-[9px] p-1 border rounded bg-gray-50 outline-none w-16">
+                            <label class="flex items-center text-[9px] text-gray-500 cursor-pointer">
+                                <input type="checkbox" ${art.isUnique ? 'checked' : ''} onchange="updateArtwork('${art.id}', 'isUnique', this.checked)" class="mr-1">
+                                Obra única
+                            </label>
+                         </div>
+                         <div class="flex gap-2">
+                             <button onclick="moveArtwork(${index}, -1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-up"></i></button>
+                             <button onclick="moveArtwork(${index}, 1)" class="text-gray-400 hover:text-black"><i class="fas fa-chevron-down"></i></button>
+                             <button onclick="deleteArtwork('${art.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                         </div>
+                    </div>
+                `;
+                artworkList.appendChild(div);
+            });
+        }
 
-    <!-- MODAL DE NOTAS -->
-    <div id="notes-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 id="notes-modal-title" class="text-xl font-bold text-slate-800">Notas del Proyecto</h3>
-                <button onclick="closeNotesModal()" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <div id="notes-modal-content" class="space-y-4">
-                    <!-- El contenido se llenará dinámicamente -->
+        function updateArtwork(id, field, value) {
+            const art = artworks.find(a => a.id == id);
+            if (art) { art[field] = value; updatePreview(); }
+        }
+
+        function deleteArtwork(id) {
+            artworks = artworks.filter(a => a.id != id);
+            renderArtworkList();
+            updatePreview();
+        }
+
+        function moveArtwork(index, direction) {
+            if (direction === -1 && index > 0) [artworks[index], artworks[index - 1]] = [artworks[index - 1], artworks[index]];
+            else if (direction === 1 && index < artworks.length - 1) [artworks[index], artworks[index + 1]] = [artworks[index + 1], artworks[index]];
+            renderArtworkList(); updatePreview();
+        }
+
+        // --- RENDERIZADO DE VISTA PREVIA ---
+        function updatePreview() {
+            previewContainer.innerHTML = '';
+            const sectionOrder = getSectionOrder();
+            
+            sectionOrder.forEach(type => {
+                if (type === 'fullimg' && fullPageImage) renderFullImagePreview();
+                if (type === 'cover') renderCoverPreview();
+                if (type === 'intro' && inputs.introText.value.trim()) renderIntroPreview();
+                if (type === 'cv' && inputs.cvText.value.trim()) renderCvPreview();
+                if (type === 'works') renderWorksPreview();
+            });
+        }
+
+        function renderFullImagePreview() {
+            const page = document.createElement('div');
+            page.className = 'preview-page relative overflow-hidden';
+            page.innerHTML = `<img src="${fullPageImage}" class="absolute inset-0 w-full h-full object-cover">`;
+            previewContainer.appendChild(page);
+        }
+
+        function renderCoverPreview() {
+            const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+            const subVal = inputs.subtitle.value.trim() || "OBRA GENERAL";
+            const dateVal = inputs.updateText.value.trim();
+            const titleSize = inputs.titleSize.value + 'px';
+
+            const cover = document.createElement('div');
+            cover.className = 'preview-page p-12 flex flex-col items-center justify-between text-center font-serif-pdf';
+            cover.innerHTML = `
+                <div class="absolute inset-0 flex items-center justify-center opacity-[0.08] grayscale z-0 overflow-hidden pointer-events-none">
+                     <img src="${LOGO_PATH}" class="w-[85mm] max-w-none transform translate-y-[-52px]" onerror="this.style.display='none'">
                 </div>
-                <div class="flex justify-end mt-6">
-                    <button onclick="closeNotesModal()" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700">
-                        Cerrar
-                    </button>
+                
+                <div class="relative z-10 flex flex-col items-center w-full mt-24 mb-4">
+                    <h1 class="tracking-[0.3em] mb-4 font-normal uppercase px-4" style="font-size: ${titleSize}; line-height: 1.1;">${globalTitle}</h1>
+                    <h2 class="text-xs tracking-[0.4em] uppercase opacity-60">${subVal}</h2>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="app.js"></script>
+                
+                <div class="w-full flex-1"></div>
+                
+                <div class="relative z-10 w-full flex flex-col items-center mt-4">
+                    <p class="text-[10px] font-sans-pdf tracking-[0.2em] uppercase font-bold text-slate-800">${dateVal}</p>
+                </div>
+                <div class="relative z-10 w-full mb-8 mt-6">
+                    <p class="text-[9px] text-gray-500 font-sans-pdf leading-relaxed max-w-[320px] mx-auto italic opacity-80">${inputs.legalNote.value}</p>
+                </div>
+            `;
+            previewContainer.appendChild(cover);
+        }
+
+        function renderIntroPreview() {
+            const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+            const introPage = document.createElement('div');
+            introPage.className = 'preview-page p-12 flex flex-col font-serif-pdf';
+            introPage.innerHTML = `
+                <div class="mt-8 mb-8">
+                    <h3 class="text-xl tracking-widest uppercase border-b border-gray-200 pb-4 mb-6">${inputs.introTitle.value}</h3>
+                    <div class="text-[11px] leading-6 text-justify whitespace-pre-wrap font-serif-pdf text-gray-800">
+                        ${inputs.introText.value}
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center text-[8px] text-gray-400 font-sans-pdf uppercase tracking-widest">
+                    <span>${inputs.introTitle.value}</span>
+                    <span>${globalTitle}</span>
+                </div>
+            `;
+            previewContainer.appendChild(introPage);
+        }
+
+        function renderCvPreview() {
+            const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+            const cvPage = document.createElement('div');
+            cvPage.className = 'preview-page p-12 flex flex-col font-serif-pdf';
+            cvPage.innerHTML = `
+                <div class="mt-8 mb-8">
+                    <h3 class="text-xl tracking-widest uppercase border-b border-gray-200 pb-4 mb-6">${inputs.cvTitle.value}</h3>
+                    <div class="text-[11px] leading-6 text-justify whitespace-pre-wrap font-serif-pdf text-gray-800">
+                        ${inputs.cvText.value}
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center text-[8px] text-gray-400 font-sans-pdf uppercase tracking-widest">
+                    <span>${inputs.cvTitle.value}</span>
+                    <span>${globalTitle}</span>
+                </div>
+            `;
+            previewContainer.appendChild(cvPage);
+        }
+
+        function renderWorksPreview() {
+            const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+            const dateVal = inputs.updateText.value.trim();
+            
+            artworks.forEach((art, i) => {
+                const currentArtist = art.artist.trim() || globalTitle;
+                const page = document.createElement('div');
+                page.className = 'preview-page p-12 flex flex-col justify-between font-serif-pdf';
+                page.innerHTML = `
+                    <div class="flex-1 flex items-center justify-center py-6">
+                        <img src="${art.image}" class="max-h-[85%] max-w-full object-contain shadow-xl relative z-10">
+                    </div>
+                    <div class="relative pt-8 flex flex-col items-center">
+                        <div class="mb-4 relative z-10 text-right w-full">
+                            <p class="text-base tracking-tight leading-relaxed">
+                                <span class="font-bold">"${art.title}"</span>
+                                ${art.artist ? `<br><span class="text-xs opacity-60 font-sans-pdf uppercase tracking-widest">${art.artist}</span>` : ''}
+                                <div class="mt-1 flex justify-end items-center gap-2">
+                                    ${art.isUnique ? `<span class="text-[9px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span> <span class="text-[9px] opacity-30">|</span>` : ''}
+                                    <span class="text-[10px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>
+                                    <span class="text-[9px] opacity-30">|</span>
+                                    <span class="text-[10px] font-sans-pdf">${art.dimensions}</span>
+                                    <span class="text-[9px] opacity-30">|</span>
+                                    <span class="text-[9px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
+                                </div>
+                            </p>
+                        </div>
+                        <div class="flex justify-between items-baseline pt-2 font-sans-pdf text-[6px] text-gray-400 uppercase tracking-[0.2em] relative z-10 border-t border-gray-100 w-full">
+                             <p class="font-bold flex-1 text-left">${AVAILABILITY_TEXT}</p>
+                             <div class="flex items-center justify-center flex-1 px-2">
+                                <img src="${LOGO_PATH}" class="w-6 opacity-[0.1] grayscale" onerror="this.style.display='none'">
+                             </div>
+                             <p class="flex-1 text-right">${currentArtist} • ${dateVal} • PÁGINA ${i + 1}</p>
+                        </div>
+                    </div>
+                `;
+                previewContainer.appendChild(page);
+            });
+        }
+
+        // --- GENERACIÓN DE PDF ---
+        async function generatePDF() {
+            const loader = document.getElementById('loader');
+            loader.classList.remove('hidden');
+            try {
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                
+                // Precargar Logo
+                let logoData = null;
+                try {
+                    const response = await fetch(LOGO_PATH);
+                    const blob = await response.blob();
+                    logoData = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {}
+
+                const sectionOrder = getSectionOrder();
+                let firstPageCreated = false;
+
+                const addPage = () => {
+                    if (firstPageCreated) doc.addPage();
+                    else firstPageCreated = true;
+                };
+
+                for (const type of sectionOrder) {
+                    if (type === 'fullimg' && fullPageImage) {
+                        addPage();
+                        const img = new Image();
+                        img.src = fullPageImage;
+                        await new Promise(r => img.onload = r);
+                        
+                        // Cálculo para llenar la hoja (Cover)
+                        const imgRatio = img.width / img.height;
+                        const pageRatio = pageWidth / pageHeight;
+                        let renderW, renderH, offsetX, offsetY;
+
+                        if (imgRatio > pageRatio) {
+                            renderH = pageHeight;
+                            renderW = pageHeight * imgRatio;
+                            offsetX = (pageWidth - renderW) / 2;
+                            offsetY = 0;
+                        } else {
+                            renderW = pageWidth;
+                            renderH = pageWidth / imgRatio;
+                            offsetX = 0;
+                            offsetY = (pageHeight - renderH) / 2;
+                        }
+                        
+                        doc.addImage(fullPageImage, 'JPEG', offsetX, offsetY, renderW, renderH);
+                    }
+                    
+                    if (type === 'cover') {
+                        addPage();
+                        const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+                        const dateVal = inputs.updateText.value.trim();
+                        const pdfTitleSize = parseInt(inputs.titleSize.value);
+                        const titleY = 85;
+
+                        if (logoData) {
+                            doc.saveGraphicsState();
+                            doc.setGState(new doc.GState({ opacity: 0.08 }));
+                            doc.addImage(logoData, 'PNG', (pageWidth - 85) / 2, titleY - 42.5 - 1.5, 85, 85);
+                            doc.restoreGraphicsState();
+                        }
+                        doc.setTextColor(0);
+                        doc.setFont("times", "normal");
+                        doc.setFontSize(pdfTitleSize);
+                        doc.text(globalTitle.toUpperCase().split('').join('  '), pageWidth / 2, titleY, { align: "center", maxWidth: 170 });
+                        doc.setFontSize(10);
+                        doc.text(inputs.subtitle.value.toUpperCase().split('').join('   '), pageWidth / 2, titleY + 12, { align: "center" });
+                        doc.text(dateVal.toUpperCase(), pageWidth / 2, 175, { align: "center" });
+                        doc.setFontSize(8);
+                        doc.setTextColor(100);
+                        doc.text(doc.splitTextToSize(inputs.legalNote.value, 110), pageWidth / 2, 265, { align: "center" });
+                    }
+
+                    if (type === 'intro' && inputs.introText.value.trim()) {
+                        addPage();
+                        doc.setTextColor(0);
+                        doc.setFont("times", "normal");
+                        doc.setFontSize(14);
+                        doc.text(inputs.introTitle.value.toUpperCase(), 25, 35);
+                        doc.setLineWidth(0.1);
+                        doc.line(25, 38, pageWidth - 25, 38);
+                        doc.setFontSize(11);
+                        const splitText = doc.splitTextToSize(inputs.introText.value, pageWidth - 50);
+                        doc.text(splitText, 25, 50);
+                    }
+
+                    if (type === 'cv' && inputs.cvText.value.trim()) {
+                        addPage();
+                        doc.setTextColor(0);
+                        doc.setFont("times", "normal");
+                        doc.setFontSize(14);
+                        doc.text(inputs.cvTitle.value.toUpperCase(), 25, 35);
+                        doc.setLineWidth(0.1);
+                        doc.line(25, 38, pageWidth - 25, 38);
+                        doc.setFontSize(11);
+                        const splitText = doc.splitTextToSize(inputs.cvText.value, pageWidth - 50);
+                        doc.text(splitText, 25, 50);
+                    }
+
+                    if (type === 'works') {
+                        const globalTitle = inputs.artistName.value.trim() || "CATÁLOGO";
+                        const dateVal = inputs.updateText.value.trim();
+                        for (let i = 0; i < artworks.length; i++) {
+                            addPage();
+                            const art = artworks[i];
+                            const currentArtist = art.artist.trim() || globalTitle;
+                            const margin = 25;
+                            const img = new Image();
+                            img.src = art.image;
+                            await new Promise(r => img.onload = r);
+                            let rW = 160, rH = (img.height * 160) / img.width;
+                            if (rH > 180) { rH = 180; rW = (img.width * 180) / img.height; }
+                            doc.addImage(art.image, 'JPEG', margin + (160 - rW) / 2, 45 + (180 - rH) / 2, rW, rH);
+
+                            if (logoData) {
+                                doc.saveGraphicsState();
+                                doc.setGState(new doc.GState({ opacity: 0.08 }));
+                                doc.addImage(logoData, 'PNG', (pageWidth - 10) / 2, pageHeight - 16.5, 10, 10);
+                                doc.restoreGraphicsState();
+                            }
+
+                            doc.setTextColor(0);
+                            doc.setFont("times", "normal"); 
+                            doc.setFontSize(14);
+                            doc.text(`"${art.title}"`, pageWidth - margin, 258, { align: "right" });
+                            
+                            doc.setFont("helvetica", "normal");
+                            doc.setFontSize(9);
+                            doc.setTextColor(80);
+                            let info = [];
+                            if (art.isUnique) info.push("OBRA ÚNICA");
+                            info.push(art.medium); info.push(art.dimensions); info.push(art.code);
+                            doc.text(info.join('   |   ').toUpperCase(), pageWidth - margin, 266, { align: "right" });
+
+                            doc.setFontSize(5.5);
+                            doc.setTextColor(180);
+                            doc.setFont("helvetica", "normal");
+                            doc.text(AVAILABILITY_TEXT, margin, pageHeight - 12);
+                            const footerString = `${currentArtist.toUpperCase()}  •  ${dateVal.toUpperCase()}  •  PÁGINA ${i + 1}`;
+                            doc.text(footerString, pageWidth - margin, pageHeight - 12, { align: "right" });
+                        }
+                    }
+                }
+                
+                doc.save(`CATALOGO_${inputs.artistName.value.trim().replace(/\s+/g, '_') || 'ART'}.pdf`);
+            } catch (e) { console.error(e); } finally { loader.classList.add('hidden'); }
+        }
+        updatePreview();
+    </script>
 </body>
 </html>
