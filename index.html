@@ -505,7 +505,7 @@
                                 <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
                                 <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
                             </div>
-                            <input type="text" placeholder="PRECIO" value="${art.price || ''}" oninput="updateArtwork('${art.id}', 'price', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase mt-1 w-full">
+                            <input type="text" placeholder="PRECIO" aria-label="Precio de la obra" value="${art.price || ''}" oninput="updateArtwork('${art.id}', 'price', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase mt-1 w-full">
                         </div>
                     </div>
                     <div class="flex justify-between items-center text-xs">
