@@ -472,6 +472,7 @@
                         artist: "", 
                         medium: "ÓLEO SOBRE TELA",
                         dimensions: "120 x 100 CM",
+                        price: "",
                         code: "CAT-" + Math.floor(1000 + Math.random() * 9000),
                         isUnique: false
                     };
@@ -500,9 +501,10 @@
                         <div class="flex-1 space-y-2">
                             <input type="text" placeholder="TÍTULO" value="${art.title}" oninput="updateArtwork('${art.id}', 'title', this.value.toUpperCase())" class="w-full text-xs p-1 border rounded font-bold outline-none uppercase font-serif-pdf">
                             <input type="text" placeholder="ARTISTA" value="${art.artist}" oninput="updateArtwork('${art.id}', 'artist', this.value.toUpperCase())" class="w-full text-[10px] p-1 border rounded outline-none uppercase italic text-blue-600 bg-blue-50">
-                            <div class="grid grid-cols-2 gap-1">
+                            <div class="grid grid-cols-3 gap-1">
                                 <input type="text" value="${art.medium}" oninput="updateArtwork('${art.id}', 'medium', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
                                 <input type="text" value="${art.dimensions}" oninput="updateArtwork('${art.id}', 'dimensions', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
+                                <input type="text" placeholder="PRECIO" value="${art.price || ''}" oninput="updateArtwork('${art.id}', 'price', this.value.toUpperCase())" class="text-[9px] p-1 border rounded outline-none uppercase">
                             </div>
                         </div>
                     </div>
@@ -637,6 +639,25 @@
             
             artworks.forEach((art, i) => {
                 const currentArtist = art.artist.trim() || globalTitle;
+                const infoParts = [];
+                if (art.isUnique) {
+                    infoParts.push(`<span class="text-[9px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span>`);
+                }
+                if (art.medium && art.medium.trim()) {
+                    infoParts.push(`<span class="text-[10px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>`);
+                }
+                if (art.dimensions && art.dimensions.trim()) {
+                    infoParts.push(`<span class="text-[10px] font-sans-pdf">${art.dimensions}</span>`);
+                }
+                if (art.price && art.price.trim()) {
+                    infoParts.push(`<span class="text-[10px] font-sans-pdf uppercase tracking-wider">${art.price}</span>`);
+                }
+                if (art.code && art.code.trim()) {
+                    infoParts.push(`<span class="text-[9px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>`);
+                }
+                const infoMarkup = infoParts
+                    .map((part, index) => index ? `<span class="text-[9px] opacity-30">|</span>${part}` : part)
+                    .join(' ');
                 const page = document.createElement('div');
                 page.className = 'preview-page p-12 flex flex-col justify-between font-serif-pdf';
                 page.innerHTML = `
@@ -649,12 +670,7 @@
                                 <span class="font-bold">"${art.title}"</span>
                                 ${art.artist ? `<br><span class="text-xs opacity-60 font-sans-pdf uppercase tracking-widest">${art.artist}</span>` : ''}
                                 <div class="mt-1 flex justify-end items-center gap-2">
-                                    ${art.isUnique ? `<span class="text-[9px] font-sans-pdf uppercase tracking-widest text-gray-400">Obra única</span> <span class="text-[9px] opacity-30">|</span>` : ''}
-                                    <span class="text-[10px] font-sans-pdf uppercase tracking-wider">${art.medium}</span>
-                                    <span class="text-[9px] opacity-30">|</span>
-                                    <span class="text-[10px] font-sans-pdf">${art.dimensions}</span>
-                                    <span class="text-[9px] opacity-30">|</span>
-                                    <span class="text-[9px] font-sans-pdf bg-black text-white px-2 py-0.5 font-bold">${art.code}</span>
+                                    ${infoMarkup}
                                 </div>
                             </p>
                         </div>
@@ -810,7 +826,9 @@
                             doc.setTextColor(80);
                             let info = [];
                             if (art.isUnique) info.push("OBRA ÚNICA");
-                            info.push(art.medium); info.push(art.dimensions); info.push(art.code);
+                            info.push(art.medium); info.push(art.dimensions);
+                            if (art.price && art.price.trim()) info.push(art.price);
+                            if (art.code && art.code.trim()) info.push(art.code);
                             doc.text(info.join('   |   ').toUpperCase(), pageWidth - margin, 266, { align: "right" });
 
                             doc.setFontSize(5.5);
