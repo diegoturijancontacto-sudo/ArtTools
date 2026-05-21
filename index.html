@@ -826,8 +826,8 @@
                             doc.setTextColor(80);
                             let info = [];
                             if (art.isUnique) info.push("OBRA ÚNICA");
-                            info.push(art.medium);
-                            info.push(art.dimensions);
+                            if (art.medium && art.medium.trim()) info.push(art.medium);
+                            if (art.dimensions && art.dimensions.trim()) info.push(art.dimensions);
                             if (art.price && art.price.trim()) info.push(art.price);
                             if (art.code && art.code.trim()) info.push(art.code);
                             doc.text(info.join('   |   ').toUpperCase(), pageWidth - margin, 266, { align: "right" });
